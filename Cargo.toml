@@ -1,0 +1,12 @@
+[package]
+name = "lab_1"
+version = "0.1.0"
+edition = "2021"
+target = "x86_64-pc-windows-gnu"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[dependencies]
+winapi = { version = "0.3.6", features = ["wingdi", "winuser", "libloaderapi", "combaseapi", "objbase", "shobjidl", "winerror"] }
+
+[target.'cfg(target_os = "windows")'.features]
+default = ["windows"]
