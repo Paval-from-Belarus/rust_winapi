@@ -1,157 +1,174 @@
 #![cfg(windows)]
 // Let's put this so that it won't open the console
 #![windows_subsystem = "windows"]
+#![allow(non_snake_case)]
 
-/// Example 2: Simple window that responds to a click event
-///
-/// Clicking on the window shows a message dialog
-/// Example build up from these examples and documents:
-///      https://drywa.me/2017/07/02/simple-win32-window-with-rust/
-///      https://gist.github.com/TheSatoshiChiba/6dd94713669efd1636efe4ee026b67af
-///      http://www.winprog.org/tutorial/
+mod resources;
+mod utils;
+
 use std::error::Error;
-use std::ptr::null_mut;
+use std::mem::MaybeUninit;
 use winapi::shared::minwindef::*;
 use winapi::shared::windef::*;
 use winapi::um::libloaderapi::{GetModuleFileNameW, GetModuleHandleW};
 use winapi::um::winuser::*;
+use winapi::um::mmsystem::*;
+use winapi::um::mmeapi::*;
+use winapi::um::winnt::{LONG, PCWSTR, PPROCESS_MITIGATION_IMAGE_LOAD_POLICY};
+use std::ptr;
+use std::sync::{Arc, Mutex};
+use winapi::um::winbase::UMS_THREAD_INFO_CLASS;
+use winapi::um::wingdi::{BitBlt, BITMAP, CreateCompatibleBitmap, CreateCompatibleDC, DeleteDC, DeleteObject, EndPage, Rectangle, RestoreDC, SaveDC, SelectObject, SRCCOPY};
+use crate::resources::{HERO_BITMAP, TITLE_ICON};
+use crate::utils::{createMainWindow, FormParams, WindowsString};
 
-// Get a win32 lpstr from a &str, converting u8 to u16 and appending '\0'
-fn to_wstring(value: &str) -> Vec<u16> {
-    use std::os::windows::ffi::OsStrExt;
+//get a win32 lpstr from a &str, converting u8 to u16 and appending '\0'
 
-    std::ffi::OsStr::new(value)
-        .encode_wide()
-        .chain(std::iter::once(0))
-        .collect()
-}
-
-// Handle leftbuttonclick
-unsafe fn on_lbuttondown(hwnd: HWND) {
-    let hinstance = GetModuleHandleW(null_mut());
-    let mut name: Vec<u16> = Vec::with_capacity(MAX_PATH as usize);
-    let read_len = GetModuleFileNameW(hinstance, name.as_mut_ptr(), MAX_PATH as u32);
+unsafe fn onLeftButtonDown(hWindow: HWND) {
+    let hInstance = GetModuleHandleW(ptr::null_mut());
+    let mut name: Vec<u16> = Vec::with_capacity(MAX_PATH);
+    let read_len = GetModuleFileNameW(hInstance, name.as_mut_ptr(), MAX_PATH as u32);
     name.set_len(read_len as usize);
     // We could convert name to String using String::from_utf16_lossy(&name)
     MessageBoxW(
-        hwnd,
+        hWindow,
         name.as_ptr(),
-        to_wstring("This program is:").as_ptr(),
+        "This program is:".as_os_str().as_ptr(),
         MB_OK | MB_ICONINFORMATION,
     );
 }
 
+static mut HERO: Option<FlyHero> = Option::None;
+static mut BACK_BUFFER: Option<BackBuffer> = Option::None;
 // Window procedure function to handle events
-pub unsafe extern "system" fn window_proc(
-    hwnd: HWND,
-    msg: UINT,
-    wparam: WPARAM,
-    lparam: LPARAM,
-) -> LRESULT {
+pub unsafe extern "system" fn MainWindowProc(hWindow: HWND, msg: UINT, wParam: WPARAM, lParam: LPARAM) -> LRESULT {gi
     match msg {
+        WM_PAINT => {
+            // let (hero, backBuffer) = unsafe {
+            //     (HERO.unwrap(), BACK_BUFFER.unwrap())
+            // };
+            // let mut paintStruct = MaybeUninit::<PAINTSTRUCT>::uninit();
+            // hero.draw(backBuffer.hdc);
+            // let hdc = BeginPaint(hWindow, paintStruct.as_mut_ptr());
+            // let psBoard = paintStruct.assume_init();
+            // BitBlt(hdc, 0, 0, 800, 800, backBuffer.hdc, 0, 0, SRCCOPY);
+            // EndPaint(hWindow, &psBoard);
+        }
         WM_CLOSE => {
-            DestroyWindow(hwnd);
+            DestroyWindow(hWindow);
         }
         WM_DESTROY => {
             PostQuitMessage(0);
         }
         WM_LBUTTONDOWN => {
-            on_lbuttondown(hwnd);
+            onLeftButtonDown(hWindow);
         }
-        _ => return DefWindowProcW(hwnd, msg, wparam, lparam),
+        _ => return DefWindowProcW(hWindow, msg, wParam, lParam),
     }
     return 0;
 }
 
-// Declare class and instantiate window
-fn create_main_window(name: &str, title: &str) -> Result<HWND, Box<dyn Error>> {
-    let name = to_wstring(name);
-    let title = to_wstring(title);
 
-    unsafe {
-        // Get handle to the file used to create the calling process
-        let hinstance = GetModuleHandleW(null_mut());
+#[derive(Copy, Clone)]
+pub struct BackBuffer {
+    hdc: HDC,
+    hBitmap: HBITMAP,
+}
 
-        // Create and register window class
-        let wnd_class = WNDCLASSEXW {
-            cbSize: std::mem::size_of::<WNDCLASSEXW>() as u32,
-            style: CS_OWNDC | CS_HREDRAW | CS_VREDRAW,
-            lpfnWndProc: Some(window_proc),
-            cbClsExtra: 0,
-            cbWndExtra: 0,
-            hInstance: hinstance, // Handle to the instance that contains the window procedure for the class
-            hIcon: LoadIconW(null_mut(), IDI_APPLICATION),
-            hCursor: LoadCursorW(null_mut(), IDC_ARROW),
-            hbrBackground: COLOR_WINDOWFRAME as HBRUSH,
-            lpszMenuName: null_mut(),
-            lpszClassName: name.as_ptr(),
-            hIconSm: LoadIconW(null_mut(), IDI_APPLICATION),
-        };
+#[derive(Copy, Clone)]
+struct FlyHero {
+    rect: RECT,
+    sprite: HBITMAP,
+}
 
-        // Register window class
-        if RegisterClassExW(&wnd_class) == 0 {
-            MessageBoxW(
-                null_mut(),
-                to_wstring("Window Registration Failed!").as_ptr(),
-                to_wstring("Error").as_ptr(),
-                MB_ICONEXCLAMATION | MB_OK,
-            );
-            return Err("Window Registration Failed".into());
-        };
-
-        // Create a window based on registered class
-        let handle = CreateWindowExW(
-            0,                                // dwExStyle
-            name.as_ptr(),                    // lpClassName
-            title.as_ptr(),                   // lpWindowName
-            WS_OVERLAPPEDWINDOW | WS_VISIBLE, // dwStyle
-            CW_USEDEFAULT,                    // Int x
-            CW_USEDEFAULT,                    // Int y
-            CW_USEDEFAULT,                    // Int nWidth
-            CW_USEDEFAULT,                    // Int nHeight
-            null_mut(),                       // hWndParent
-            null_mut(),                       // hMenu
-            hinstance,                        // hInstance
-            null_mut(),                       // lpParam
-        );
-
-        if handle.is_null() {
-            MessageBoxW(
-                null_mut(),
-                to_wstring("Window Creation Failed!").as_ptr(),
-                to_wstring("Error!").as_ptr(),
-                MB_ICONEXCLAMATION | MB_OK,
-            );
-            return Err("Window Creation Failed!".into());
+impl FlyHero {
+    const DEFAULT_WIDTH: LONG = 100;
+    const DEFAULT_HEIGHT: LONG = 100;
+    pub fn new(x: LONG, y: LONG, sprite: HBITMAP) -> FlyHero {
+        FlyHero {
+            rect: RECT {
+                left: x,
+                top: y + FlyHero::DEFAULT_HEIGHT,
+                right: x + FlyHero::DEFAULT_WIDTH,
+                bottom: y,
+            },
+            sprite,
         }
-
-        Ok(handle)
+    }
+    pub fn draw(&self, hdc: HDC) {
+        let positions = self.rect;
+        unsafe {
+            SaveDC(hdc);
+            SelectObject(hdc, self.sprite as HGDIOBJ);
+            Rectangle(hdc, positions.left, positions.top, positions.right, positions.bottom);
+            RestoreDC(hdc, -1); //restore previous hdc
+        }
     }
 }
+
+impl BackBuffer {
+    pub fn create(hWindow: HWND, width: INT, height: INT) -> BackBuffer {
+        let (hdc, hBitmap) = unsafe {
+            let hdcWindow = GetDC(hWindow);
+            let hdc = CreateCompatibleDC(hdcWindow);
+            let hBitmap = CreateCompatibleBitmap(hdcWindow, width, height);
+            SaveDC(hdc);
+            SelectObject(hdc, hBitmap as HGDIOBJ);
+            ReleaseDC(hWindow, hdcWindow);
+            (hdc, hBitmap)
+        };
+        return BackBuffer {
+            hdc,
+            hBitmap,
+        };
+    }
+    pub fn release(self) {
+        unsafe {
+            RestoreDC(self.hdc, -1);
+            DeleteObject(self.hBitmap as HGDIOBJ);
+            DeleteDC(self.hdc);
+        }
+    }
+}
+
 
 // Message handling loop
-fn run_message_loop(hwnd: HWND) -> WPARAM {
+fn messageDispatchLoop(hWindow: HWND) -> WPARAM {
     unsafe {
-        let mut msg: MSG = std::mem::uninitialized();
-        loop {
-            // Get message from message queue
-            if GetMessageW(&mut msg, hwnd, 0, 0) > 0 {
-                TranslateMessage(&msg);
-                DispatchMessageW(&msg);
-            } else {
-                // Return on error (<0) or exit (=0) cases
-                return msg.wParam;
-            }
+        let mut msg = MaybeUninit::<MSG>::uninit();
+        while GetMessageW(msg.as_mut_ptr(), hWindow, 0, 0) > 0 {
+            let msg = msg.assume_init();
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
         }
+        let msg = msg.assume_init();
+        msg.wParam
     }
 }
 
+
 fn main() {
-    let hwnd = create_main_window("my_window", "Example window creation")
-        .expect("Window creation failed!");
+    let params = FormParams::getDefaultParams();
+    let hMainWindow = unsafe {
+        createMainWindow("Cool piano", "Piano cool", Some(MainWindowProc), &params)
+            .expect("create_main_window method failed")
+    };
+    let hInstance = unsafe {
+        GetModuleHandleW(ptr::null_mut())
+    };
+    let hero = unsafe {
+        let bitmap = LoadImageW(hInstance, MAKEINTRESOURCEW(HERO_BITMAP),
+                                IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION) as HBITMAP;
+        FlyHero::new(0, 0, bitmap)
+    };
+    let backBuffer = BackBuffer::create(hMainWindow, params.width, params.height);
     unsafe {
-        ShowWindow(hwnd, SW_SHOW);
-        UpdateWindow(hwnd);
+        // HERO = Some(hero);
+        BACK_BUFFER = Some(backBuffer);
     }
-    run_message_loop(hwnd);
+    unsafe {
+        ShowWindow(hMainWindow, SW_SHOW);
+        UpdateWindow(hMainWindow);
+    }
+    messageDispatchLoop(hMainWindow);
 }
