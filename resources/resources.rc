@@ -1,2 +1,3 @@
-1 ICON "E:\\linux\\lab_1\\resources\\rust-icon.ico" //the application icon
-2 BITMAP "E:\\linux\\lab_1\\resources\\red-ball.bmp" //the main hero bitmap
+100 ICON ".\\resources\\rust-icon.ico"
+101 BITMAP ".\\resources\\background.bmp"
+102 BITMAP ".\\resources\\hero.bmp"
