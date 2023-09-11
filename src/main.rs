@@ -12,9 +12,9 @@ mod utils;
 mod hero;
 mod background;
 
-use std::error::Error;
+
 use std::mem::MaybeUninit;
-use std::ops::Deref;
+
 use winapi::shared::minwindef::*;
 use winapi::shared::windef::*;
 use winapi::um::libloaderapi::{GetModuleFileNameW, GetModuleHandleW};
@@ -24,8 +24,8 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 use winapi::um::wingdi::{BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, DeleteDC, DeleteObject, RestoreDC, SaveDC, SelectObject, SRCCOPY};
 use crate::background::Background;
 use crate::hero::FlyHero;
-use crate::resources::{BACKGROUND_BITMAP, HERO_BITMAP, load_resources, TITLE_ICON};
-use crate::utils::{FormParams, showErrorMessage, Vector2, WindowsString};
+use crate::resources::{BACKGROUND_BITMAP, HERO_FORE_BITMAP, HERO_MASK_BITMAP, load_resources, TITLE_ICON};
+use crate::utils::{FormParams, Vector2, WindowsString};
 
 unsafe fn onLeftButtonDown(hWindow: HWND) {
       let hInstance = GetModuleHandleW(ptr::null_mut());
@@ -75,9 +75,9 @@ impl Window {
             };
 
             let mut window = Box::<Window>::new_uninit();
-            let mut resources = load_resources(hInstance);
+            let mut resources = load_resources(hInstance).expect("Failed to load resources");
             let hWindow = unsafe {
-                  let hIcon = (resources.remove(&TITLE_ICON)).expect("Application icon is not loaded") as HICON;
+                  let hIcon = (resources.remove(&TITLE_ICON)).unwrap() as HICON;
                   let windowClass = WNDCLASSEXW {
                         cbSize: mem::size_of::<WNDCLASSEXW>() as UINT,
                         style: CS_GLOBALCLASS,// CS_OWNDC | CS_HREDRAW | CS_VREDRAW,
@@ -117,9 +117,10 @@ impl Window {
                   Background::new(bitmap)
             };
             let mainHero = {
-                  let bitmap = resources.remove(&HERO_BITMAP).unwrap() as HBITMAP;
+                  let fore_hbitmap = resources.remove(&HERO_FORE_BITMAP).unwrap() as HBITMAP;
+                  let mask_hbitmap = resources.remove(&HERO_MASK_BITMAP).unwrap() as HBITMAP;
                   let center = POINT { x: params.width / 2, y: params.height / 2 };
-                  FlyHero::new(center, bitmap)
+                  FlyHero::new(center, fore_hbitmap, mask_hbitmap)
             }.unwrap();
             let clientWindow = RECT { left: 0, top: 0, right: params.width, bottom: params.height };
             window.write(Window { hWindow, mainHero, backBuffer, background, clientWindow });

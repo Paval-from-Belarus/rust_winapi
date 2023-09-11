@@ -40,15 +40,17 @@ impl Vector2 {
             Vector2 { x: self.x * scalar, y: self.y * scalar }
       }
       pub fn dest2(&self, other: &Vector2) -> f32 {
-            f32::powi((self.x - other.x), 2) + f32::powi((self.y - other.y), 2)
+            f32::powi(self.x - other.x, 2) + f32::powi(self.y - other.y, 2)
       }
       pub fn abs2(&self) -> f32 {
             f32::powi(self.x, 2) + f32::powi(self.y, 2)
       }
 }
 
-pub unsafe fn showErrorMessage(description: &str) {
-      MessageBoxW(ptr::null_mut(), description.as_os_str().as_ptr(), "Error".as_os_str().as_ptr(), MB_ICONEXCLAMATION | MB_OK);
+pub fn show_error_message(description: &str) {
+      unsafe {
+            MessageBoxW(ptr::null_mut(), description.as_os_str().as_ptr(), "Error".as_os_str().as_ptr(), MB_ICONEXCLAMATION | MB_OK);
+      }
 }
 
 impl WindowsString for str {

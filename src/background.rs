@@ -1,5 +1,5 @@
 use winapi::shared::windef::{HBITMAP, HBRUSH, HDC, HGDIOBJ, RECT};
-use winapi::um::wingdi::{BITMAP, CreatePatternBrush, CreateSolidBrush, DeleteObject, Rectangle, RestoreDC, SaveDC, SelectObject};
+use winapi::um::wingdi::{CreatePatternBrush, DeleteObject, RestoreDC, SaveDC};
 use winapi::um::winuser::FillRect;
 
 pub struct Background {
