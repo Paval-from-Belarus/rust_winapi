@@ -40,7 +40,16 @@ impl FlyHero {
                 rect.top >= window.top && rect.bottom <= window.bottom;
             !can_move
       }
-
+      pub fn shift(&mut self, x_offset: isize, y_offset: isize) {
+            self.position = self.position.add_coordinates(x_offset as f32, y_offset as f32);
+            self.makeMove(0_f32);
+      }
+      pub fn rect(&self) -> RECT {
+            self.center_rect
+      }
+      pub fn stop(&mut self) {
+            self.velocity = Vector2::ZERO;
+      }
       pub fn boost(&mut self, impulse: Vector2) -> bool {
             let boosted_velocity = self.velocity.add_vector(impulse);
             let was_boosted;

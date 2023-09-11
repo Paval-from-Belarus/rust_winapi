@@ -19,13 +19,19 @@ use winapi::shared::minwindef::*;
 use winapi::shared::windef::*;
 use winapi::um::libloaderapi::{GetModuleFileNameW, GetModuleHandleW};
 use winapi::um::winuser::*;
-use std::{mem, ptr};
+use std::{cmp, mem, ptr};
+use std::ffi::c_int;
+use std::ops::AddAssign;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
+use winapi::ctypes::__uint8;
+use winapi::um::winbase::MoveFileA;
 use winapi::um::wingdi::{BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, DeleteDC, DeleteObject, RestoreDC, SaveDC, SelectObject, SRCCOPY};
+use winapi::um::winnt::LONG;
 use crate::background::Background;
 use crate::hero::FlyHero;
+
 use crate::resources::{BACKGROUND_BITMAP, HERO_FORE_BITMAP, HERO_MASK_BITMAP, load_resources, TITLE_ICON};
-use crate::utils::{FormParams, Vector2, WindowsString};
+use crate::utils::{FormParams, show_error_message, Vector2, WindowsString};
 
 unsafe fn onLeftButtonDown(hWindow: HWND) {
       let hInstance = GetModuleHandleW(ptr::null_mut());
@@ -53,16 +59,38 @@ pub struct Window {
       background: Background,
       //the window size
       clientWindow: RECT,
-
+      isShiftPressed: bool,
 }
 
-#[derive(Copy, Clone, TryFromPrimitive, IntoPrimitive)]
-#[repr(usize)]
+#[derive(Copy, Clone, IntoPrimitive)]
+#[repr(i32)]
 pub enum MovementEvent {
       Left = 0,
       Up = 1,
       Right = 2,
       Down = 3,
+}
+
+impl MovementEvent {
+      pub fn is_horizontal(&self) -> bool {
+            matches!(self, MovementEvent::Left) || matches!(self, MovementEvent::Right)
+      }
+      pub fn is_vertical(&self) -> bool {
+            matches!(self, MovementEvent::Up) || matches!(self, MovementEvent::Down)
+      }
+}
+
+impl TryFrom<i32> for MovementEvent {
+      type Error = ();
+      fn try_from(value: i32) -> Result<Self, Self::Error> {
+            match value {
+                  VK_LEFT => Ok(MovementEvent::Left),
+                  VK_RIGHT => Ok(MovementEvent::Right),
+                  VK_UP => Ok(MovementEvent::Up),
+                  VK_DOWN => Ok(MovementEvent::Down),
+                  _ => Err(())
+            }
+      }
 }
 
 impl Window {
@@ -123,7 +151,7 @@ impl Window {
                   FlyHero::new(center, fore_hbitmap, mask_hbitmap)
             }.unwrap();
             let clientWindow = RECT { left: 0, top: 0, right: params.width, bottom: params.height };
-            window.write(Window { hWindow, mainHero, backBuffer, background, clientWindow });
+            window.write(Window { hWindow, mainHero, backBuffer, background, clientWindow, isShiftPressed: false });
             unsafe { window.assume_init() }
       }
       fn run(&self) -> Result<WPARAM, ()> {
@@ -186,9 +214,30 @@ impl Window {
                               self.backBuffer = BackBuffer::new(self.hWindow, self.clientWindow.right, self.clientWindow.bottom);//automatically drop last value
                               InvalidateRect(self.hWindow, ptr::null_mut(), TRUE);
                         }
+                        WM_MOUSEWHEEL => {
+                              if self.isShiftPressed {
+                                    let delta = GET_WHEEL_DELTA_WPARAM(wParam);
+                                    let keys = GET_KEYSTATE_WPARAM(wParam);
+                                    let event = Window::assignMouseMovementEvent(delta as isize, keys as usize);
+                                    self.manuallyMoveHero(delta as isize, event);
+                                    const MOUSE_MOVEMENT_DELTA: usize = 50;
+                                    InvalidateRect(self.hWindow, ptr::null_mut(), TRUE);
+                              }
+                        }
+                        WM_KEYUP => {
+                              if wParam == VK_SHIFT as usize {
+                                    self.isShiftPressed = false;
+                              }
+                              return 0;
+                        }
                         WM_KEYDOWN => {
-                              let eventId = (wParam as usize).saturating_sub(VK_LEFT as usize);
-                              let event = MovementEvent::try_from(eventId);
+                              if wParam == VK_SHIFT as usize || self.isShiftPressed {
+                                    self.isShiftPressed = true;
+                                    self.mainHero.stop();
+                                    return 0;
+                              }
+                              // show_error_message(&(wParam as usize).to_string());
+                              let event = MovementEvent::try_from(wParam as i32);
                               if event.is_ok() {
                                     self.boostHero(event.unwrap());
                                     InvalidateRect(self.hWindow, ptr::null_mut(), TRUE);
@@ -211,6 +260,52 @@ impl Window {
                   DefWindowProcW(self.hWindow, message, wParam, lParam)
             }
       }
+      fn assignMouseMovementEvent(mouse_delta: isize, key_state: usize) -> MovementEvent {
+            let events;
+            let key_state = unsafe {
+                  GetKeyState(VK_CONTROL)
+            };
+            if key_state < 0 {
+                  events = [MovementEvent::Right, MovementEvent::Left];
+            } else {
+                  events = [MovementEvent::Down, MovementEvent::Up];
+            }
+            let event;
+            if mouse_delta < 0 {
+                  event = events[0];
+            } else {
+                  event = events[1];
+            }
+            event
+      }
+      fn manuallyMoveHero(&mut self, wheel_delta: isize, event: MovementEvent) {
+            const MOUSE_MOVEMENT_STEP: isize = 50; //the size of mouse step
+            // let wheel_delta = (wheel_delta / WHEEL_DELTA as WORD) * MOUSE_MOVEMENT_STEP;
+            let delta = ((wheel_delta / WHEEL_DELTA as isize).abs() * MOUSE_MOVEMENT_STEP) as i32;
+            let hero_rect = self.mainHero.rect();
+            let window_rect = self.clientWindow;
+            let x_offset: i32;
+            let y_offset: i32;
+            match event {
+                  MovementEvent::Left => {
+                        y_offset = 0;
+                        x_offset = -cmp::min((hero_rect.left - window_rect.left), delta);
+                  }
+                  MovementEvent::Up => {
+                        x_offset = 0;
+                        y_offset = -cmp::min((hero_rect.top - window_rect.top), delta);
+                  }
+                  MovementEvent::Right => {
+                        y_offset = 0;
+                        x_offset = cmp::min((window_rect.right - hero_rect.right), delta);
+                  }
+                  MovementEvent::Down => {
+                        x_offset = 0;
+                        y_offset = cmp::min((window_rect.bottom - hero_rect.bottom), delta);
+                  }
+            }
+            self.mainHero.shift(x_offset as isize, y_offset as isize);
+      }
       fn moveHero(&mut self, delta: f32) {
             let hero = &mut self.mainHero;
             if !hero.collides(self.clientWindow) {
@@ -224,7 +319,7 @@ impl Window {
       fn boostHero(&mut self, event: MovementEvent) {
             const KICK_VECTORS: [Vector2; 4] = [Vector2::LEFT, Vector2::UP, Vector2::RIGHT, Vector2::DOWN];
             const JUMP_LEN: f32 = 10.0;
-            let vectorIndex: usize = event.into();
+            let vectorIndex = event as usize;
             let jumpVector = KICK_VECTORS[vectorIndex].multiply(JUMP_LEN);
             self.mainHero.boost(jumpVector);
       }
