@@ -1,3 +1,5 @@
 [toolchain]
 channel = "nightly-2023-09-08"
+targets = ["x86_64-pc-windows-msvc"]
+profile = "minimal"
 #targets = ["x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu","x86_64-pc-windows-gnullvm"]

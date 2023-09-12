@@ -24,8 +24,9 @@ use std::ffi::c_int;
 use std::ops::AddAssign;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use winapi::ctypes::__uint8;
-use winapi::um::winbase::MoveFileA;
-use winapi::um::wingdi::{BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, DeleteDC, DeleteObject, RestoreDC, SaveDC, SelectObject, SRCCOPY};
+use winapi::um::processthreadsapi::GetStartupInfoW;
+use winapi::um::winbase::STARTUPINFOEXW;
+use winapi::um::wingdi::{BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, DeleteDC, DeleteObject, MAKEPOINTS, MAKEROP4, PATCOPY, PATINVERT, RestoreDC, SaveDC, SelectObject, SRCCOPY};
 use winapi::um::winnt::LONG;
 use crate::background::Background;
 use crate::hero::FlyHero;
@@ -108,7 +109,7 @@ impl Window {
                   let hIcon = (resources.remove(&TITLE_ICON)).unwrap() as HICON;
                   let windowClass = WNDCLASSEXW {
                         cbSize: mem::size_of::<WNDCLASSEXW>() as UINT,
-                        style: CS_GLOBALCLASS,// CS_OWNDC | CS_HREDRAW | CS_VREDRAW,
+                        style: CS_GLOBALCLASS, //| CS_OWNDC | CS_HREDRAW | CS_VREDRAW,
                         lpfnWndProc: Some(Self::windowProc),
                         cbClsExtra: 0,
                         cbWndExtra: 0,
@@ -174,7 +175,7 @@ impl Window {
                   if message != WM_CREATE {
                         let this = GetWindowLongPtrW(hWindow, GWLP_USERDATA) as *mut Self;
                         if !this.is_null() {
-                              result = Some((*this).handleWindowMessage(message, wParam, lParam));
+                              result = Some((*this).handleWindowMessage(message, wParam, lParam, GET_X_LPARAM!(lParam) as f32));
                         }
                   } else {
                         let createStruct = lParam as *const CREATESTRUCTW;
@@ -189,7 +190,7 @@ impl Window {
                   result.unwrap()
             }
       }
-      pub fn handleWindowMessage(&mut self, message: UINT, wParam: WPARAM, lParam: LPARAM) -> LRESULT {
+      pub fn handleWindowMessage(&mut self, message: UINT, wParam: WPARAM, lParam: LPARAM, x: f32) -> LRESULT {
             unsafe {
                   match message {
                         WM_PAINT => {
@@ -246,6 +247,21 @@ impl Window {
                               return 0;
                         }
                         WM_LBUTTONDOWN => {
+                              if self.isShiftPressed {
+                                    return 0;
+                              }
+                              const IMPULSE_MODULE: f32 = 10.0f32;
+                              const MIN_DIRECTION_MODULE: f32 = 15.0f32;
+                              let xPos = x;
+                              let yPos = GET_Y_LPARAM!(lParam) as f32;
+                              let clickedPosition = Vector2 { x: xPos, y: yPos };
+                              let direction = clickedPosition.sub_vector(self.mainHero.position());
+                              let directionAbs = direction.abs2();
+                              if directionAbs >= MIN_DIRECTION_MODULE {
+                                    let directionAbs = f32::sqrt(directionAbs);
+                                    let impulse = direction.multiply(1.0f32 / directionAbs).multiply(IMPULSE_MODULE);
+                                    self.mainHero.boost(impulse);
+                              }
                               // onLeftButtonDown(self.hWindow);
                               return 0;
                         }
@@ -307,6 +323,7 @@ impl Window {
             self.mainHero.shift(x_offset as isize, y_offset as isize);
       }
       fn moveHero(&mut self, delta: f32) {
+            self.burdenHero();
             let hero = &mut self.mainHero;
             if !hero.collides(self.clientWindow) {
                   hero.makeMove(delta);
@@ -324,7 +341,8 @@ impl Window {
             self.mainHero.boost(jumpVector);
       }
       fn burdenHero(&mut self) {
-            self.mainHero.boost(Window::GRAVITY_VECTOR);
+            let velocity = self.mainHero.velocity();
+            self.mainHero.boost(velocity.multiply(-0.001));
       }
 }
 

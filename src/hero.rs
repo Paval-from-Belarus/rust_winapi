@@ -20,7 +20,7 @@ pub struct FlyHero {
 impl FlyHero {
       const DEFAULT_WIDTH: LONG = 100;
       const DEFAULT_HEIGHT: LONG = 100;
-      const MAX_VELOCITY: f32 = 30_f32;
+      const MAX_VELOCITY: f32 = 40_f32;
       const MAX_VELOCITY_POWER_TWO: f32 = FlyHero::MAX_VELOCITY * FlyHero::MAX_VELOCITY;
       pub fn new(center: POINT, fore_hbitmap: HBITMAP, mask_hbitmap: HBITMAP) -> Result<FlyHero, DWORD> {
             let center_rect = FlyHero::center_to_rect(center.x, center.y, FlyHero::DEFAULT_WIDTH, FlyHero::DEFAULT_HEIGHT);
@@ -32,7 +32,9 @@ impl FlyHero {
                   position: Vector2 { x: center.x as f32, y: center.y as f32 },
             })
       }
-
+      pub fn position(&self) -> Vector2 {
+            Vector2 { x: self.position.x, y: self.position.y }
+      }
       //no hard calculation
       pub fn collides(&self, window: RECT) -> bool {
             let rect = self.center_rect;
@@ -54,6 +56,10 @@ impl FlyHero {
             let boosted_velocity = self.velocity.add_vector(impulse);
             let was_boosted;
             let boosted_power_two = boosted_velocity.abs2();
+            if boosted_power_two < 0.9 {
+                  self.velocity = Vector2::ZERO;
+                  return false;
+            }
             if boosted_power_two < FlyHero::MAX_VELOCITY_POWER_TWO {
                   self.velocity = boosted_velocity;
                   was_boosted = true;
@@ -65,6 +71,9 @@ impl FlyHero {
                   was_boosted = false;
             }
             was_boosted
+      }
+      pub fn velocity(&self) -> Vector2 {
+            Vector2 { x: self.velocity.x, y: self.velocity.y }
       }
       //reflect the current vector in reverse direction
       pub fn quickJump(&mut self) {

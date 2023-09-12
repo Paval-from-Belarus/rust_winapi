@@ -1,5 +1,7 @@
+use std::mem::MaybeUninit;
 use std::ptr;
 use winapi::shared::minwindef::*;
+use winapi::um::processthreadsapi::{GetStartupInfoW, LPSTARTUPINFOW, STARTUPINFOW};
 use winapi::um::winnt::LONG;
 use winapi::um::winuser::*;
 
@@ -12,6 +14,7 @@ pub struct FormParams {
       pub(crate) position: (LONG, LONG),
       pub(crate) width: LONG,
       pub(crate) height: LONG,
+      pub(crate) startup_info: STARTUPINFOW,
 }
 
 pub struct Vector2 {
@@ -23,7 +26,17 @@ pub enum VectorAxis {
       Horizontal,
       Vertical,
 }
+macro_rules! GET_X_LPARAM {
+    ($lp:expr) => {
+        ($lp & 0xffff) as WORD
+    };
+}
 
+macro_rules! GET_Y_LPARAM {
+    ($lp:expr) => {
+        (($lp >> 16) & 0xffff) as WORD
+    };
+}
 impl Vector2 {
       pub const ZERO: Vector2 = Vector2 { x: 0.0, y: 0.0 };
       pub const UP: Vector2 = Vector2 { x: 0.0, y: -1.0 };
@@ -32,6 +45,12 @@ impl Vector2 {
       pub const RIGHT: Vector2 = Vector2 { x: 1.0, y: 0.0 };
       pub fn add_vector(&self, other: Vector2) -> Vector2 {
             Vector2 { x: self.x + other.x, y: self.y + other.y }
+      }
+      pub fn sub_vector(&self, other: Vector2) -> Vector2 {
+            Vector2 { x: self.x - other.x, y: self.y - other.y }
+      }
+      pub fn sub_coordinates(&self, x: f32, y: f32) -> Vector2 {
+            Vector2 { x: self.x - x, y: self.y - y }
       }
       pub fn add_coordinates(&self, x: f32, y: f32) -> Vector2 {
             Vector2 { x: x + self.x, y: y + self.y }
@@ -74,11 +93,17 @@ impl FormParams {
                   let yOffset = GetSystemMetrics(SM_CYSCREEN) / 2 - FormParams::DEFAULT_HEIGHT / 2;
                   (xOffset, yOffset)
             };
+            let startup_info = unsafe {
+                  let mut info = MaybeUninit::<STARTUPINFOW>::uninit();
+                  GetStartupInfoW(info.as_mut_ptr() as LPSTARTUPINFOW);
+                  info.assume_init()
+            };
             FormParams {
                   style: FormParams::DEFAULT_STYLE,
                   position: (xOffset, yOffset),
                   width: FormParams::DEFAULT_WIDTH,
                   height: FormParams::DEFAULT_HEIGHT,
+                  startup_info,
             }
       }
 }
