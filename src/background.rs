@@ -1,16 +1,21 @@
-use winapi::shared::windef::{HBITMAP, HBRUSH, HDC, HGDIOBJ, RECT};
-use winapi::um::wingdi::{CreatePatternBrush, DeleteObject, RestoreDC, SaveDC};
+use winapi::shared::windef::{COLORREF, HBITMAP, HBRUSH, HDC, HGDIOBJ, RECT};
+use winapi::um::wingdi::{CreatePatternBrush, CreateSolidBrush, DeleteObject, RestoreDC, SaveDC};
 use winapi::um::winuser::FillRect;
+use winapi_util::console::Color;
 
 pub struct Background {
-      sprite: HBITMAP,
       brush: HBRUSH,
 }
 
 impl Background {
+      pub fn solid(color: COLORREF) -> Background {
+            let brush = unsafe { CreateSolidBrush(color) };
+            Background { brush }
+      }
       pub fn new(sprite: HBITMAP) -> Background {
             let brush = unsafe { CreatePatternBrush(sprite) } as HBRUSH;
-            Background { sprite, brush }
+            unsafe { DeleteObject(sprite as HGDIOBJ); }
+            Background { brush }
       }
       pub fn draw(&mut self, window: &RECT, hdc: HDC) {
             unsafe {
@@ -23,7 +28,6 @@ impl Background {
       }
       pub fn finalize(&mut self) {
             unsafe {
-                  DeleteObject(self.sprite as HGDIOBJ);
                   DeleteObject(self.brush as HGDIOBJ);
             }
       }

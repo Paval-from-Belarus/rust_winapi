@@ -1,6 +1,8 @@
 use std::mem::MaybeUninit;
 use std::ptr;
+use std::task::ready;
 use winapi::shared::minwindef::*;
+use winapi::shared::windef::{HDC, RECT};
 use winapi::um::processthreadsapi::{GetStartupInfoW, LPSTARTUPINFOW, STARTUPINFOW};
 use winapi::um::winnt::LONG;
 use winapi::um::winuser::*;
@@ -72,6 +74,11 @@ pub fn show_error_message(description: &str) {
       }
 }
 
+trait RawPointerConversion<T> {
+      fn as_ptr(&self) -> *const T;
+      fn as_mut_ptr(&mut self) -> *mut T;
+}
+
 impl WindowsString for str {
       fn as_os_str(&self) -> Vec<u16> {
             use std::os::windows::ffi::OsStrExt;
@@ -81,7 +88,26 @@ impl WindowsString for str {
                 .collect()
       }
 }
+#[inline]
+pub fn offset_rect(rect: &mut RECT, delta_x: INT, delta_y: INT) {
+      unsafe {
+            OffsetRect(rect, delta_x, delta_y);
+      }
+}
+#[inline]
+pub fn copy_rect(dest: &mut RECT, source: &RECT) {
+      unsafe {
+            CopyRect(dest, source);
+      }
+}
 
+pub fn rect_width(rect: &RECT) -> LONG {
+      LONG::abs(rect.right - rect.left)
+}
+
+pub fn rect_height(rect: &RECT) -> LONG {
+      LONG::abs(rect.bottom - rect.top)
+}
 
 impl FormParams {
       const DEFAULT_STYLE: DWORD = (WS_VISIBLE | WS_OVERLAPPEDWINDOW) & !(WS_SIZEBOX | WS_MAXIMIZEBOX);

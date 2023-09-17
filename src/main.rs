@@ -20,14 +20,16 @@ use winapi::shared::windef::*;
 use winapi::um::libloaderapi::{GetModuleFileNameW, GetModuleHandleW};
 use winapi::um::winuser::*;
 use std::{cmp, mem, ptr};
+use std::cell::OnceCell;
 use std::ffi::c_int;
 use std::ops::AddAssign;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use winapi::ctypes::__uint8;
 use winapi::um::processthreadsapi::GetStartupInfoW;
 use winapi::um::winbase::STARTUPINFOEXW;
-use winapi::um::wingdi::{BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, DeleteDC, DeleteObject, MAKEPOINTS, MAKEROP4, PATCOPY, PATINVERT, RestoreDC, SaveDC, SelectObject, SRCCOPY};
-use winapi::um::winnt::LONG;
+use winapi::um::wingdi::{BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, DeleteDC, DeleteObject, MAKEPOINTS, MAKEROP4, PATCOPY, PATINVERT, RestoreDC, RGB, SaveDC, SelectObject, SRCCOPY};
+use winapi::um::winnt::{LONG, LPCWSTR, LPSTR};
+use winapi_util::console::Color;
 use crate::background::Background;
 use crate::hero::FlyHero;
 
@@ -40,14 +42,174 @@ pub struct BackBuffer {
       hBitmap: HBITMAP,
 }
 
-pub struct Window {
+pub struct Window<'a> {
       hWindow: HWND,
       backBuffer: BackBuffer,
-      mainHero: FlyHero,
-      background: Background,
       //the window size
       clientWindow: RECT,
-      isShiftPressed: bool,
+      background: Background,
+      table: TextTable<'a>,
+}
+
+pub struct TextTable<'a> {
+      rows: Vec<TextRow>,
+      chosen_ceil: Option<&'a mut TextCeil>,
+      row_width: usize,
+      row_height: usize,
+      row_cnt: usize,
+      column_cnt: usize,
+}
+
+pub struct TextRow {
+      row: Vec<TextCeil>,
+      max_height: usize,
+      // start_x: usize,
+      // //the upper lower bound of row
+      // start_y: usize,
+}
+
+pub struct TextCeil {
+      text: Vec<u16>,
+      rect: RECT,
+      //to draw
+      format: UINT,
+}
+
+impl<'a> TextTable<'a> {
+      ///dimensions are width and height
+      pub fn new<'b>(client_window: &'b RECT, row_cnt: usize, column_cnt: usize) -> TextTable<'a> {
+            let mut rows = Vec::<TextRow>::with_capacity(row_cnt);
+            let table_width = utils::rect_width(client_window) as usize;
+            let table_height = utils::rect_height(client_window) as usize;
+            let row_height = table_height / row_cnt;
+            let row_width = table_width;
+            let mut start_y = client_window.top as usize;
+            let start_x = client_window.left as usize;
+            for _ in 0..row_cnt {
+                  let row = TextRow::new((row_width, row_height), start_x, start_y, column_cnt);
+                  rows.push(row);
+                  start_y += row_height;
+            }
+            TextTable { rows, row_cnt, column_cnt, row_height, row_width, chosen_ceil: None }
+      }
+      pub fn draw(&mut self, hdc: HDC) {
+            self.rows.iter_mut().for_each(|row| row.draw(hdc));
+      }
+      pub fn resize(&mut self, client_window: &RECT) {
+            let table_height = utils::rect_height(client_window) as usize;
+            let table_width = utils::rect_width(client_window) as usize;
+            let row_height = table_height / self.row_cnt;
+            let row_width = table_width;
+            let mut start_y = client_window.top as usize;
+            let start_x = client_window.left as usize;
+            for row in self.rows.iter_mut() {
+                  row.resize((row_width, row_height), start_x, start_y);
+                  start_y += row_height;
+            }
+            self.row_height = row_height;
+            self.row_width = row_width;
+      }
+      pub fn handle_click(&'a mut self, x: LONG, y: LONG) {
+            let column_offset = x as usize / self.row_width;
+            let row_offset = y as usize / self.row_height;
+            debug_assert!(self.rows.len() > row_offset);
+            let row = self.rows.get_mut(row_offset).unwrap();
+            let ceil = row.ceil(column_offset).unwrap();
+            if let Some(last_chosen) = &mut self.chosen_ceil {
+                  last_chosen.text = String::from("A").as_os_str();
+            }
+            ceil.text = String::from("B").as_os_str();
+            self.chosen_ceil = Some(ceil);
+      }
+}
+
+impl TextRow {
+      const DEFAULT_CEIL_FORMAT: UINT = DT_CENTER;
+      ///dimension are width and height corresponding
+      pub fn new(dimensions: (usize, usize), start_x: usize, start_y: usize, column_cnt: usize) -> TextRow {
+            debug_assert!(column_cnt >= 1);
+            let ceil_width = (dimensions.0 / column_cnt);
+            let ceil_height = (dimensions.1);
+            let mut ceil_rect = RECT {
+                  left: start_x as LONG,
+                  top: start_y as LONG,
+                  right: (start_x + ceil_width) as LONG,
+                  bottom: (start_y + ceil_height) as LONG,
+            };
+            let mut row = Vec::<TextCeil>::with_capacity(column_cnt);
+            for _ in 0..column_cnt {
+                  let ceil = TextCeil::new(ceil_rect.clone(), TextRow::DEFAULT_CEIL_FORMAT);
+                  row.push(ceil);
+                  utils::offset_rect(&mut ceil_rect, ceil_width as INT, 0);
+            }
+            TextRow { row, max_height: ceil_height }
+      }
+      ///as always the first element of dimension is width, the second is height
+      pub fn resize(&mut self, dimensions: (usize, usize), start_x: usize, start_y: usize) {
+            let ceil_width = (dimensions.0 / self.row.len());
+            let ceil_height = dimensions.1;
+            let mut ceil_rect = RECT {
+                  left: start_x as LONG,
+                  right: (start_x + ceil_width) as LONG,
+                  top: start_y as LONG,
+                  bottom: (start_y + ceil_height) as LONG,
+            };
+            for ceil in self.row.iter_mut() {
+                  utils::copy_rect(&mut ceil.rect, &ceil_rect);
+                  utils::offset_rect(&mut ceil_rect, ceil_width as INT, 0);
+            }
+      }
+      pub fn shift(&mut self, delta_x: isize, delta_y: isize) {
+            // self.start_x += delta_x;
+            // self.start_y += delta_y;
+            for ceil in self.row.iter_mut() {
+                  utils::offset_rect(&mut ceil.rect, delta_x as INT, delta_y as INT);
+            }
+      }
+      ///return current row height
+      pub fn shrink(&mut self, height: usize) -> usize {
+            if self.max_height >= height { //do nothing where row is already huge
+                  return self.max_height;
+            }
+            let max_height = self.row.iter()
+                .map(|ceil| ceil.height())
+                .max().unwrap();
+            self.max_height = max_height;
+            self.row.iter_mut()
+                .for_each(|ceil| ceil.set_height(max_height));
+            self.max_height
+      }
+      pub fn set_format(&mut self, format: UINT) {
+            self.row.iter_mut().for_each(|ceil| ceil.set_format(format));
+      }
+      pub fn draw(&mut self, hdc: HDC) {
+            self.row.iter_mut().for_each(|ceil| ceil.draw_text(hdc));
+      }
+      pub fn ceil(&mut self, ceil_index: usize) -> Option<&mut TextCeil> {
+            self.row.get_mut(ceil_index)
+      }
+}
+
+impl TextCeil {
+      pub fn new(rect: RECT, format: UINT) -> TextCeil {
+            let text = String::from("A").as_os_str();
+            TextCeil { rect, format, text }
+      }
+      pub fn draw_text(&mut self, hdc: HDC) {
+            unsafe {
+                  DrawTextW(hdc, self.text.as_ptr() as LPCWSTR, self.text.len() as INT, &mut self.rect as _, self.format);
+            }
+      }
+      pub fn height(&self) -> usize {//ceil supports such invariant that height is only positive
+            let rect = self.rect;
+            (rect.bottom - rect.top) as usize
+      }
+      pub fn set_format(&mut self, format: UINT) {
+            self.format = format;
+      }
+      pub fn set_height(&mut self, height: usize) {
+            self.rect.bottom = self.rect.top + height as LONG;
+      }
 }
 
 #[derive(Copy, Clone, IntoPrimitive)]
@@ -81,7 +243,7 @@ impl TryFrom<i32> for MovementEvent {
       }
 }
 
-impl Window {
+impl<'a> Window<'a> {
       //this function
       pub fn new(className: &str, windowTitle: &str, params: FormParams) -> Box<Self> {
             let className = className.as_os_str();
@@ -128,18 +290,10 @@ impl Window {
                   hWindow
             };
             let backBuffer = BackBuffer::new(hWindow, params.width, params.height);
-            let background = {
-                  let bitmap = resources.remove(&BACKGROUND_BITMAP).unwrap() as HBITMAP;
-                  Background::new(bitmap)
-            };
-            let mainHero = {
-                  let fore_hbitmap = resources.remove(&HERO_FORE_BITMAP).unwrap() as HBITMAP;
-                  let mask_hbitmap = resources.remove(&HERO_MASK_BITMAP).unwrap() as HBITMAP;
-                  let center = POINT { x: params.width / 2, y: params.height / 2 };
-                  FlyHero::new(center, fore_hbitmap, mask_hbitmap)
-            }.unwrap();
             let clientWindow = RECT { left: 0, top: 0, right: params.width, bottom: params.height };
-            window.write(Window { hWindow, mainHero, backBuffer, background, clientWindow, isShiftPressed: false });
+            let background = Background::solid(RGB(100, 200, 50));
+            let table = TextTable::new(&clientWindow, 12, 10);
+            window.write(Window { hWindow, backBuffer, clientWindow, background, table });
             unsafe { window.assume_init() }
       }
       fn run(&self) -> Result<WPARAM, ()> {
@@ -176,14 +330,13 @@ impl Window {
                   result.unwrap()
             }
       }
-      pub fn handleWindowMessage(&mut self, message: UINT, wParam: WPARAM, lParam: LPARAM) -> LRESULT {
+      pub fn handleWindowMessage(&'a mut self, message: UINT, wParam: WPARAM, lParam: LPARAM) -> LRESULT {
             unsafe {
                   match message {
                         WM_PAINT => {
                               let hdcBack = self.backBuffer.getHDC();
                               self.background.draw(&self.clientWindow, hdcBack);
-                              self.mainHero.draw(hdcBack);
-                              self.moveHero(0.05);
+                              self.table.draw(hdcBack);
                               let mut paintStruct = MaybeUninit::<PAINTSTRUCT>::uninit();
                               let hdc = BeginPaint(self.hWindow, paintStruct.as_mut_ptr());
                               BitBlt(hdc, 0, 0, self.clientWindow.right, self.clientWindow.bottom, hdcBack, 0, 0, SRCCOPY);
@@ -194,56 +347,18 @@ impl Window {
                         WM_ERASEBKGND => {
                               return TRUE as LRESULT;
                         }
-                        WM_SIZE => {
-                              GetClientRect(self.hWindow, &mut self.clientWindow);
-                              self.mainHero.stop();
-                              self.backBuffer.finalize();
-                              self.backBuffer = BackBuffer::new(self.hWindow, self.clientWindow.right, self.clientWindow.bottom);//automatically drop last value
-                              InvalidateRect(self.hWindow, ptr::null_mut(), TRUE);
-                        }
-                        WM_MOUSEWHEEL => {
-                              if self.isShiftPressed {
-                                    let delta = GET_WHEEL_DELTA_WPARAM(wParam);
-                                    let keys = GET_KEYSTATE_WPARAM(wParam);
-                                    let event = Window::assignMouseMovementEvent(delta as isize, keys as usize);
-                                    self.manuallyMoveHero(delta as isize, event);
-                                    InvalidateRect(self.hWindow, ptr::null_mut(), TRUE);
-                              }
-                        }
-                        WM_KEYUP => {
-                              if wParam == VK_SHIFT as usize {
-                                    self.isShiftPressed = false;
-                              }
-                              return 0;
-                        }
-                        WM_KEYDOWN => {
-                              if wParam == VK_SHIFT as usize || self.isShiftPressed {
-                                    self.isShiftPressed = true;
-                                    self.mainHero.stop();
-                                    return 0;
-                              }
-                              // show_error_message(&(wParam as usize).to_string());
-                              let event = MovementEvent::try_from(wParam as i32);
-                              if event.is_ok() {
-                                    self.boostHero(event.unwrap());
-                                    InvalidateRect(self.hWindow, ptr::null_mut(), TRUE);
-                                    // showErrorMessage(&self.mainHero.rect.bottom.to_string());
-                              } //else ignore any keyboard input
-                              return 0;
-                        }
+                        WM_SIZE => {}
+                        WM_MOUSEWHEEL => {}
+                        WM_KEYUP => {}
+                        WM_KEYDOWN => {}
                         WM_LBUTTONDOWN => {
-                              if !self.isShiftPressed {
-                                    let targetPoint = POINT {
-                                          x: GET_X_LPARAM!(lParam),
-                                          y: GET_Y_LPARAM!(lParam),
-                                    };
-                                    self.pushHero(targetPoint);
-                              }
-                              return 0;
+                              let x = GET_X_LPARAM!(lParam);
+                              let y = GET_Y_LPARAM!(lParam);
+                              self.table.handle_click(x, y);
                         }
                         WM_DESTROY => {
                               self.backBuffer.finalize();
-                              self.mainHero.finalize();
+                              self.background.finalize();
                               //finalization happens via drop method by out of scope
                               PostQuitMessage(0);
                         }
@@ -251,86 +366,6 @@ impl Window {
                   }
                   DefWindowProcW(self.hWindow, message, wParam, lParam)
             }
-      }
-      fn manuallyMoveHero(&mut self, wheel_delta: isize, event: MovementEvent) {
-            const MOUSE_MOVEMENT_STEP: isize = 50; //the size of mouse step
-            // let wheel_delta = (wheel_delta / WHEEL_DELTA as WORD) * MOUSE_MOVEMENT_STEP;
-            let delta = ((wheel_delta / WHEEL_DELTA as isize).abs() * MOUSE_MOVEMENT_STEP) as i32;
-            let hero_rect = self.mainHero.rect();
-            let window_rect = self.clientWindow;
-            let x_offset: i32;
-            let y_offset: i32;
-            match event {
-                  MovementEvent::Left => {
-                        y_offset = 0;
-                        x_offset = -cmp::min((hero_rect.left - window_rect.left), delta);
-                  }
-                  MovementEvent::Up => {
-                        x_offset = 0;
-                        y_offset = -cmp::min((hero_rect.top - window_rect.top), delta);
-                  }
-                  MovementEvent::Right => {
-                        y_offset = 0;
-                        x_offset = cmp::min((window_rect.right - hero_rect.right), delta);
-                  }
-                  MovementEvent::Down => {
-                        x_offset = 0;
-                        y_offset = cmp::min((window_rect.bottom - hero_rect.bottom), delta);
-                  }
-            }
-            self.mainHero.shift(x_offset as isize, y_offset as isize);
-      }
-      fn pushHero(&mut self, target_point: POINT) {
-            const IMPULSE_LEN: f32 = 10.0f32;
-            const MIN_DIRECTION_POWER_TWO_LEN: f32 = 15.0f32;
-            let clicked_pos = Vector2 { x: target_point.x as f32, y: target_point.y as f32 };
-            let direction = clicked_pos.sub_vector(self.mainHero.position());
-            let direction_len = direction.len2();
-            if direction_len >= MIN_DIRECTION_POWER_TWO_LEN {
-                  let impulse = direction.multiply(1.0f32 / f32::sqrt(direction_len)).multiply(IMPULSE_LEN);
-                  self.mainHero.boost(impulse);
-            }
-      }
-      fn moveHero(&mut self, delta: f32) {
-            self.burdenHero();
-            let hero = &mut self.mainHero;
-            let collision = hero.collides(self.clientWindow);
-            if collision.is_none() {
-                  hero.makeMove(delta);
-            } else {
-                  hero.quickJump(collision.unwrap());
-                  hero.makeMove(0.3);//too huge delta to prevent following collisions
-            }
-      }
-      fn boostHero(&mut self, event: MovementEvent) {
-            const KICK_VECTORS: [Vector2; 4] = [Vector2::LEFT, Vector2::UP, Vector2::RIGHT, Vector2::DOWN];
-            const JUMP_LEN: f32 = 10.0;
-            let vectorIndex = event as usize;
-            let jumpVector = KICK_VECTORS[vectorIndex].multiply(JUMP_LEN);
-            self.mainHero.boost(jumpVector);
-      }
-      fn burdenHero(&mut self) {
-            const IMPULSE_DUMPER_SCALAR: f32 = -0.001;
-            let velocity = self.mainHero.velocity();
-            self.mainHero.boost(velocity.multiply(IMPULSE_DUMPER_SCALAR));
-      }
-      fn assignMouseMovementEvent(mouse_delta: isize, key_state: usize) -> MovementEvent {
-            let events;
-            let key_state = unsafe {
-                  GetKeyState(VK_CONTROL)
-            };
-            if key_state < 0 {
-                  events = [MovementEvent::Right, MovementEvent::Left];
-            } else {
-                  events = [MovementEvent::Down, MovementEvent::Up];
-            }
-            let event;
-            if mouse_delta < 0 {
-                  event = events[0];
-            } else {
-                  event = events[1];
-            }
-            event
       }
 }
 
