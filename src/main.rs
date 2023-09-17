@@ -21,13 +21,15 @@ use winapi::um::libloaderapi::{GetModuleFileNameW, GetModuleHandleW};
 use winapi::um::winuser::*;
 use std::{cmp, mem, ptr};
 use std::cell::OnceCell;
+use std::convert::Into;
 use std::ffi::c_int;
 use std::ops::AddAssign;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use winapi::ctypes::__uint8;
+use winapi::um::errhandlingapi::GetLastError;
 use winapi::um::processthreadsapi::GetStartupInfoW;
-use winapi::um::winbase::STARTUPINFOEXW;
-use winapi::um::wingdi::{BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, DeleteDC, DeleteObject, MAKEPOINTS, MAKEROP4, PATCOPY, PATINVERT, RestoreDC, RGB, SaveDC, SelectObject, SRCCOPY};
+use winapi::um::winbase::{COPYFILE2_MESSAGE_Error, STARTUPINFOEXW};
+use winapi::um::wingdi::{BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, DeleteDC, DeleteObject, MAKEPOINTS, MAKEROP4, PATCOPY, PATINVERT, PS_SOLID, Rectangle, RestoreDC, RGB, SaveDC, SelectObject, SRCCOPY};
 use winapi::um::winnt::{LONG, LPCWSTR, LPSTR};
 use winapi_util::console::Color;
 use crate::background::Background;
@@ -56,13 +58,15 @@ pub struct TextTable<'a> {
       chosen_ceil: Option<&'a mut TextCeil>,
       row_width: usize,
       row_height: usize,
-      row_cnt: usize,
       column_cnt: usize,
 }
 
 pub struct TextRow {
       row: Vec<TextCeil>,
       max_height: usize,
+      ceil_width: usize,
+      hpen_released: HPEN,
+      hpen_pressed: HPEN,
       // start_x: usize,
       // //the upper lower bound of row
       // start_y: usize,
@@ -72,7 +76,12 @@ pub struct TextCeil {
       text: Vec<u16>,
       rect: RECT,
       //to draw
-      format: UINT,
+      properties: CeilProperties,
+}
+
+pub struct CeilProperties {
+      text_format: UINT,
+      hpen_border: HPEN,
 }
 
 impl<'a> TextTable<'a> {
@@ -90,7 +99,7 @@ impl<'a> TextTable<'a> {
                   rows.push(row);
                   start_y += row_height;
             }
-            TextTable { rows, row_cnt, column_cnt, row_height, row_width, chosen_ceil: None }
+            TextTable { rows, column_cnt, row_height, row_width, chosen_ceil: None }
       }
       pub fn draw(&mut self, hdc: HDC) {
             self.rows.iter_mut().for_each(|row| row.draw(hdc));
@@ -98,7 +107,7 @@ impl<'a> TextTable<'a> {
       pub fn resize(&mut self, client_window: &RECT) {
             let table_height = utils::rect_height(client_window) as usize;
             let table_width = utils::rect_width(client_window) as usize;
-            let row_height = table_height / self.row_cnt;
+            let row_height = table_height / self.rows.len();
             let row_width = table_width;
             let mut start_y = client_window.top as usize;
             let start_x = client_window.left as usize;
@@ -110,21 +119,26 @@ impl<'a> TextTable<'a> {
             self.row_width = row_width;
       }
       pub fn handle_click(&'a mut self, x: LONG, y: LONG) {
-            let column_offset = x as usize / self.row_width;
             let row_offset = y as usize / self.row_height;
             debug_assert!(self.rows.len() > row_offset);
             let row = self.rows.get_mut(row_offset).unwrap();
-            let ceil = row.ceil(column_offset).unwrap();
+            let ceil = row.ceil(x as usize).unwrap();
             if let Some(last_chosen) = &mut self.chosen_ceil {
                   last_chosen.text = String::from("A").as_os_str();
             }
             ceil.text = String::from("B").as_os_str();
             self.chosen_ceil = Some(ceil);
       }
+      pub fn finalize(&mut self) {
+            self.rows.iter_mut().for_each(|row| row.finalize());
+      }
 }
 
 impl TextRow {
       const DEFAULT_CEIL_FORMAT: UINT = DT_CENTER;
+      const DEFAULT_CEIL_RELEASED_COLOR: COLORREF = Color::Green as COLORREF;
+      const DEFAULT_CEIL_PRESSED_COLOR: COLORREF = Color::Red as COLORREF;
+      const DEFAULT_PEN_WIDTH: DWORD = 3;
       ///dimension are width and height corresponding
       pub fn new(dimensions: (usize, usize), start_x: usize, start_y: usize, column_cnt: usize) -> TextRow {
             debug_assert!(column_cnt >= 1);
@@ -136,13 +150,28 @@ impl TextRow {
                   right: (start_x + ceil_width) as LONG,
                   bottom: (start_y + ceil_height) as LONG,
             };
+            let hpen_released = TextRow::default_pen(TextRow::DEFAULT_CEIL_RELEASED_COLOR);
+            let hpen_pressed = TextRow::default_pen(TextRow::DEFAULT_CEIL_PRESSED_COLOR);
             let mut row = Vec::<TextCeil>::with_capacity(column_cnt);
             for _ in 0..column_cnt {
-                  let ceil = TextCeil::new(ceil_rect.clone(), TextRow::DEFAULT_CEIL_FORMAT);
+                  let properties = CeilProperties {
+                        text_format: TextRow::DEFAULT_CEIL_FORMAT,
+                        hpen_border: hpen_released,
+                  };
+                  let ceil = TextCeil::new(ceil_rect.clone(), properties);
                   row.push(ceil);
                   utils::offset_rect(&mut ceil_rect, ceil_width as INT, 0);
             }
-            TextRow { row, max_height: ceil_height }
+            TextRow {
+                  row,
+                  max_height: ceil_height,
+                  ceil_width,
+                  hpen_released,
+                  hpen_pressed,
+            }
+      }
+      fn default_pen(color: COLORREF) -> HPEN {
+            utils::create_pen(PS_SOLID, TextRow::DEFAULT_PEN_WIDTH, color)
       }
       ///as always the first element of dimension is width, the second is height
       pub fn resize(&mut self, dimensions: (usize, usize), start_x: usize, start_y: usize) {
@@ -185,19 +214,28 @@ impl TextRow {
       pub fn draw(&mut self, hdc: HDC) {
             self.row.iter_mut().for_each(|ceil| ceil.draw_text(hdc));
       }
-      pub fn ceil(&mut self, ceil_index: usize) -> Option<&mut TextCeil> {
+      pub fn ceil(&mut self, column_offset: usize) -> Option<&mut TextCeil> {
+            let ceil_index = column_offset / self.ceil_width;
             self.row.get_mut(ceil_index)
+      }
+      pub fn finalize(&mut self) {
+            unsafe {
+                  DeleteObject(self.hpen_released as HGDIOBJ);
+                  DeleteObject(self.hpen_pressed as HGDIOBJ);
+            }
       }
 }
 
 impl TextCeil {
-      pub fn new(rect: RECT, format: UINT) -> TextCeil {
+      pub fn new(rect: RECT, properties: CeilProperties) -> TextCeil {
             let text = String::from("A").as_os_str();
-            TextCeil { rect, format, text }
+            TextCeil { rect, text, properties }
       }
       pub fn draw_text(&mut self, hdc: HDC) {
+            let rect = self.rect;
             unsafe {
-                  DrawTextW(hdc, self.text.as_ptr() as LPCWSTR, self.text.len() as INT, &mut self.rect as _, self.format);
+                  Rectangle(hdc, rect.left, rect.top, rect.right, rect.bottom);
+                  DrawTextW(hdc, self.text.as_ptr() as LPCWSTR, self.text.len() as INT, &mut self.rect as _, self.properties.text_format);
             }
       }
       pub fn height(&self) -> usize {//ceil supports such invariant that height is only positive
@@ -205,7 +243,10 @@ impl TextCeil {
             (rect.bottom - rect.top) as usize
       }
       pub fn set_format(&mut self, format: UINT) {
-            self.format = format;
+            self.properties.text_format = format;
+      }
+      pub fn set_border(&mut self, hpen: HPEN) {
+            self.properties.hpen_border = hpen;
       }
       pub fn set_height(&mut self, height: usize) {
             self.rect.bottom = self.rect.top + height as LONG;
@@ -347,7 +388,23 @@ impl<'a> Window<'a> {
                         WM_ERASEBKGND => {
                               return TRUE as LRESULT;
                         }
-                        WM_SIZE => {}
+                        WM_SIZE => {
+                              let mut rect = MaybeUninit::<RECT>::uninit();
+                              unsafe  {
+                                    GetClientRect(self.hWindow, rect.as_mut_ptr());
+                              }
+                              let rect = rect.assume_init();
+                              // self.table.resize(&rect);
+                              self.clientWindow = rect;
+                              InvalidateRect(self.hWindow, ptr::null_mut(), TRUE);
+
+                              // unsafe {
+                              //       GetClientRect(self.hWindow, &mut self.clientWindow);
+                              //       let error_code = GetLastError();
+                              //       utils::show_error_message(&("Error with code".to_owned() + &error_code.to_string()));
+                              // }
+                              return 0;
+                        }
                         WM_MOUSEWHEEL => {}
                         WM_KEYUP => {}
                         WM_KEYDOWN => {}
@@ -359,6 +416,7 @@ impl<'a> Window<'a> {
                         WM_DESTROY => {
                               self.backBuffer.finalize();
                               self.background.finalize();
+                              self.table.finalize();
                               //finalization happens via drop method by out of scope
                               PostQuitMessage(0);
                         }

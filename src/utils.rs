@@ -2,8 +2,9 @@ use std::mem::MaybeUninit;
 use std::ptr;
 use std::task::ready;
 use winapi::shared::minwindef::*;
-use winapi::shared::windef::{HDC, RECT};
+use winapi::shared::windef::{COLORREF, HDC, HPEN, HWND, LPRECT, RECT};
 use winapi::um::processthreadsapi::{GetStartupInfoW, LPSTARTUPINFOW, STARTUPINFOW};
+use winapi::um::wingdi::CreatePen;
 use winapi::um::winnt::LONG;
 use winapi::um::winuser::*;
 
@@ -88,16 +89,22 @@ impl WindowsString for str {
                 .collect()
       }
 }
-#[inline]
+
 pub fn offset_rect(rect: &mut RECT, delta_x: INT, delta_y: INT) {
       unsafe {
             OffsetRect(rect, delta_x, delta_y);
       }
 }
-#[inline]
+
 pub fn copy_rect(dest: &mut RECT, source: &RECT) {
       unsafe {
             CopyRect(dest, source);
+      }
+}
+
+pub fn create_pen(style: DWORD, width: DWORD, color: COLORREF) -> HPEN {
+      unsafe {
+            CreatePen(style as INT, width as INT, color)
       }
 }
 
@@ -108,7 +115,11 @@ pub fn rect_width(rect: &RECT) -> LONG {
 pub fn rect_height(rect: &RECT) -> LONG {
       LONG::abs(rect.bottom - rect.top)
 }
-
+pub fn get_client_rect(hWindow: HWND, rect: &mut RECT) {
+      unsafe {
+            GetClientRect(hWindow, rect);
+      }
+}
 impl FormParams {
       const DEFAULT_STYLE: DWORD = (WS_VISIBLE | WS_OVERLAPPEDWINDOW) & !(WS_SIZEBOX | WS_MAXIMIZEBOX);
       const DEFAULT_WIDTH: INT = 800;
