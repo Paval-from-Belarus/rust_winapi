@@ -28,13 +28,13 @@ pub enum VectorAxis {
 }
 macro_rules! GET_X_LPARAM {
     ($lp:expr) => {
-        ($lp & 0xffff) as WORD
+        ($lp & 0xffff) as LONG
     };
 }
 
 macro_rules! GET_Y_LPARAM {
     ($lp:expr) => {
-        (($lp >> 16) & 0xffff) as WORD
+        (($lp >> 16) & 0xffff) as LONG
     };
 }
 impl Vector2 {
@@ -61,7 +61,7 @@ impl Vector2 {
       pub fn dest2(&self, other: &Vector2) -> f32 {
             f32::powi(self.x - other.x, 2) + f32::powi(self.y - other.y, 2)
       }
-      pub fn abs2(&self) -> f32 {
+      pub fn len2(&self) -> f32 {
             f32::powi(self.x, 2) + f32::powi(self.y, 2)
       }
 }

@@ -34,19 +34,6 @@ use crate::hero::FlyHero;
 use crate::resources::{BACKGROUND_BITMAP, HERO_FORE_BITMAP, HERO_MASK_BITMAP, load_resources, TITLE_ICON};
 use crate::utils::{FormParams, show_error_message, Vector2, WindowsString};
 
-unsafe fn onLeftButtonDown(hWindow: HWND) {
-      let hInstance = GetModuleHandleW(ptr::null_mut());
-      let mut name: Vec<u16> = Vec::with_capacity(MAX_PATH);
-      let read_len = GetModuleFileNameW(hInstance, name.as_mut_ptr(), MAX_PATH as u32);
-      name.set_len(read_len as usize);
-      // We could convert name to String using String::from_utf16_lossy(&name)
-      MessageBoxW(
-            hWindow,
-            name.as_ptr(),
-            "This program is:".as_os_str().as_ptr(),
-            MB_OK | MB_ICONINFORMATION,
-      );
-}
 
 pub struct BackBuffer {
       hdc: HDC,
@@ -175,14 +162,13 @@ impl Window {
                   if message != WM_CREATE {
                         let this = GetWindowLongPtrW(hWindow, GWLP_USERDATA) as *mut Self;
                         if !this.is_null() {
-                              result = Some((*this).handleWindowMessage(message, wParam, lParam, GET_X_LPARAM!(lParam) as f32));
+                              result = Some((*this).handleWindowMessage(message, wParam, lParam));
                         }
                   } else {
                         let createStruct = lParam as *const CREATESTRUCTW;
                         let this = (*createStruct).lpCreateParams as *mut Self;
                         // (*this).hWindow = hWindow; //it's already set to it
                         SetWindowLongPtrW(hWindow, GWLP_USERDATA, this as _);
-                        InvalidateRect(hWindow, ptr::null_mut(), TRUE);
                   }
                   if result.is_none() {
                         result = Some(DefWindowProcW(hWindow, message, wParam, lParam));
@@ -190,7 +176,7 @@ impl Window {
                   result.unwrap()
             }
       }
-      pub fn handleWindowMessage(&mut self, message: UINT, wParam: WPARAM, lParam: LPARAM, x: f32) -> LRESULT {
+      pub fn handleWindowMessage(&mut self, message: UINT, wParam: WPARAM, lParam: LPARAM) -> LRESULT {
             unsafe {
                   match message {
                         WM_PAINT => {
@@ -200,17 +186,17 @@ impl Window {
                               self.moveHero(0.05);
                               let mut paintStruct = MaybeUninit::<PAINTSTRUCT>::uninit();
                               let hdc = BeginPaint(self.hWindow, paintStruct.as_mut_ptr());
-                              BitBlt(hdc, 0, 0, self.clientWindow.right, self.clientWindow.bottom, self.backBuffer.hdc, 0, 0, SRCCOPY);
+                              BitBlt(hdc, 0, 0, self.clientWindow.right, self.clientWindow.bottom, hdcBack, 0, 0, SRCCOPY);
                               EndPaint(self.hWindow, &paintStruct.assume_init());
                               InvalidateRect(self.hWindow, ptr::null_mut(), TRUE);
-                              // sleep(time::Duration::from_millis());
                               return 0;
                         }
                         WM_ERASEBKGND => {
-                              return 1;
+                              return TRUE as LRESULT;
                         }
                         WM_SIZE => {
                               GetClientRect(self.hWindow, &mut self.clientWindow);
+                              self.mainHero.stop();
                               self.backBuffer.finalize();
                               self.backBuffer = BackBuffer::new(self.hWindow, self.clientWindow.right, self.clientWindow.bottom);//automatically drop last value
                               InvalidateRect(self.hWindow, ptr::null_mut(), TRUE);
@@ -221,7 +207,6 @@ impl Window {
                                     let keys = GET_KEYSTATE_WPARAM(wParam);
                                     let event = Window::assignMouseMovementEvent(delta as isize, keys as usize);
                                     self.manuallyMoveHero(delta as isize, event);
-                                    const MOUSE_MOVEMENT_DELTA: usize = 50;
                                     InvalidateRect(self.hWindow, ptr::null_mut(), TRUE);
                               }
                         }
@@ -247,22 +232,13 @@ impl Window {
                               return 0;
                         }
                         WM_LBUTTONDOWN => {
-                              if self.isShiftPressed {
-                                    return 0;
+                              if !self.isShiftPressed {
+                                    let targetPoint = POINT {
+                                          x: GET_X_LPARAM!(lParam),
+                                          y: GET_Y_LPARAM!(lParam),
+                                    };
+                                    self.pushHero(targetPoint);
                               }
-                              const IMPULSE_MODULE: f32 = 10.0f32;
-                              const MIN_DIRECTION_MODULE: f32 = 15.0f32;
-                              let xPos = x;
-                              let yPos = GET_Y_LPARAM!(lParam) as f32;
-                              let clickedPosition = Vector2 { x: xPos, y: yPos };
-                              let direction = clickedPosition.sub_vector(self.mainHero.position());
-                              let directionAbs = direction.abs2();
-                              if directionAbs >= MIN_DIRECTION_MODULE {
-                                    let directionAbs = f32::sqrt(directionAbs);
-                                    let impulse = direction.multiply(1.0f32 / directionAbs).multiply(IMPULSE_MODULE);
-                                    self.mainHero.boost(impulse);
-                              }
-                              // onLeftButtonDown(self.hWindow);
                               return 0;
                         }
                         WM_DESTROY => {
@@ -275,24 +251,6 @@ impl Window {
                   }
                   DefWindowProcW(self.hWindow, message, wParam, lParam)
             }
-      }
-      fn assignMouseMovementEvent(mouse_delta: isize, key_state: usize) -> MovementEvent {
-            let events;
-            let key_state = unsafe {
-                  GetKeyState(VK_CONTROL)
-            };
-            if key_state < 0 {
-                  events = [MovementEvent::Right, MovementEvent::Left];
-            } else {
-                  events = [MovementEvent::Down, MovementEvent::Up];
-            }
-            let event;
-            if mouse_delta < 0 {
-                  event = events[0];
-            } else {
-                  event = events[1];
-            }
-            event
       }
       fn manuallyMoveHero(&mut self, wheel_delta: isize, event: MovementEvent) {
             const MOUSE_MOVEMENT_STEP: isize = 50; //the size of mouse step
@@ -322,17 +280,28 @@ impl Window {
             }
             self.mainHero.shift(x_offset as isize, y_offset as isize);
       }
+      fn pushHero(&mut self, target_point: POINT) {
+            const IMPULSE_LEN: f32 = 10.0f32;
+            const MIN_DIRECTION_POWER_TWO_LEN: f32 = 15.0f32;
+            let clicked_pos = Vector2 { x: target_point.x as f32, y: target_point.y as f32 };
+            let direction = clicked_pos.sub_vector(self.mainHero.position());
+            let direction_len = direction.len2();
+            if direction_len >= MIN_DIRECTION_POWER_TWO_LEN {
+                  let impulse = direction.multiply(1.0f32 / f32::sqrt(direction_len)).multiply(IMPULSE_LEN);
+                  self.mainHero.boost(impulse);
+            }
+      }
       fn moveHero(&mut self, delta: f32) {
             self.burdenHero();
             let hero = &mut self.mainHero;
-            if !hero.collides(self.clientWindow) {
+            let collision = hero.collides(self.clientWindow);
+            if collision.is_none() {
                   hero.makeMove(delta);
             } else {
-                  hero.quickJump();
+                  hero.quickJump(collision.unwrap());
                   hero.makeMove(0.3);//too huge delta to prevent following collisions
             }
       }
-      const GRAVITY_VECTOR: Vector2 = Vector2 { x: 0.0, y: 10.0 };
       fn boostHero(&mut self, event: MovementEvent) {
             const KICK_VECTORS: [Vector2; 4] = [Vector2::LEFT, Vector2::UP, Vector2::RIGHT, Vector2::DOWN];
             const JUMP_LEN: f32 = 10.0;
@@ -341,8 +310,27 @@ impl Window {
             self.mainHero.boost(jumpVector);
       }
       fn burdenHero(&mut self) {
+            const IMPULSE_DUMPER_SCALAR: f32 = -0.001;
             let velocity = self.mainHero.velocity();
-            self.mainHero.boost(velocity.multiply(-0.001));
+            self.mainHero.boost(velocity.multiply(IMPULSE_DUMPER_SCALAR));
+      }
+      fn assignMouseMovementEvent(mouse_delta: isize, key_state: usize) -> MovementEvent {
+            let events;
+            let key_state = unsafe {
+                  GetKeyState(VK_CONTROL)
+            };
+            if key_state < 0 {
+                  events = [MovementEvent::Right, MovementEvent::Left];
+            } else {
+                  events = [MovementEvent::Down, MovementEvent::Up];
+            }
+            let event;
+            if mouse_delta < 0 {
+                  event = events[0];
+            } else {
+                  event = events[1];
+            }
+            event
       }
 }
 

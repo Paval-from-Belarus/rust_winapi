@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use winapi::shared::minwindef::{HMODULE, UINT, WORD};
-use winapi::um::winnt::{HANDLE, IMAGE_COR_MIH_EHRVA};
+use winapi::um::winnt::HANDLE;
 use winapi::um::winuser::{IMAGE_BITMAP, IMAGE_ICON, LoadImageW, LR_DEFAULTCOLOR, MAKEINTRESOURCEW};
 use crate::utils::show_error_message;
 

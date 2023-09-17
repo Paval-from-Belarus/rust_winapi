@@ -7,7 +7,10 @@ use winapi::um::errhandlingapi::GetLastError;
 use winapi::um::wingdi::{BitBlt, BITMAP, CreateCompatibleDC, CreatePatternBrush, DeleteDC, DeleteObject, GetObjectW, RestoreDC, SaveDC, SelectObject, SRCAND, SRCCOPY, SRCPAINT};
 use winapi::um::winnt::{LONG};
 use winapi::um::winuser::{FillRect};
-use crate::utils::{show_error_message, Vector2};
+use winapi_util::console::Intense::No;
+use crate::MovementEvent;
+use crate::utils::{show_error_message, Vector2, VectorAxis};
+use crate::utils::VectorAxis::{Horizontal, Vertical};
 
 pub struct FlyHero {
       center_rect: RECT,
@@ -36,11 +39,20 @@ impl FlyHero {
             Vector2 { x: self.position.x, y: self.position.y }
       }
       //no hard calculation
-      pub fn collides(&self, window: RECT) -> bool {
+      pub fn collides(&self, window: RECT) -> Option<VectorAxis> {
             let rect = self.center_rect;
-            let can_move = rect.left >= window.left && rect.right <= window.right &&
-                rect.top >= window.top && rect.bottom <= window.bottom;
-            !can_move
+            let is_horizontal_collision = rect.left < window.left || rect.right > window.right;
+            let is_vertical_collision = rect.top < window.top || rect.bottom > window.bottom;
+            if is_horizontal_collision {
+                  return Some(Horizontal);
+            }
+            if is_vertical_collision {
+                  return Some(Vertical);
+            }
+            return None;
+            // let can_move = rect.left >= window.left && rect.right <= window.right &&
+            //     rect.top >= window.top && rect.bottom <= window.bottom;
+            // !can_move
       }
       pub fn shift(&mut self, x_offset: isize, y_offset: isize) {
             self.position = self.position.add_coordinates(x_offset as f32, y_offset as f32);
@@ -53,10 +65,11 @@ impl FlyHero {
             self.velocity = Vector2::ZERO;
       }
       pub fn boost(&mut self, impulse: Vector2) -> bool {
+            const MIN_BOOSTED_DIFF: f32 = 0.9;
             let boosted_velocity = self.velocity.add_vector(impulse);
             let was_boosted;
-            let boosted_power_two = boosted_velocity.abs2();
-            if boosted_power_two < 0.9 {
+            let boosted_power_two = boosted_velocity.len2();
+            if boosted_power_two < MIN_BOOSTED_DIFF {
                   self.velocity = Vector2::ZERO;
                   return false;
             }
@@ -76,8 +89,16 @@ impl FlyHero {
             Vector2 { x: self.velocity.x, y: self.velocity.y }
       }
       //reflect the current vector in reverse direction
-      pub fn quickJump(&mut self) {
-            self.velocity = self.velocity.multiply(-1.0f32);
+      pub fn quickJump(&mut self, axis: VectorAxis) {
+            match axis {
+                  Horizontal => {
+                        self.velocity.x *= -1.0f32;
+                  }
+                  Vertical => {
+                        self.velocity.y *= -1.0f32;
+                  }
+            }
+            // self.velocity = self.velocity.multiply(-1.0f32);
       }
       pub fn makeMove(&mut self, delta: f32) {
             let deltaX = self.velocity.x * delta;
@@ -85,6 +106,11 @@ impl FlyHero {
             self.position = self.position.add_coordinates(deltaX, deltaY);
             self.center_rect = FlyHero::center_to_rect(self.position.x as LONG, self.position.y as LONG,
                                                        FlyHero::DEFAULT_WIDTH, FlyHero::DEFAULT_HEIGHT);
+      }
+      pub fn setPosition(&mut self, center: POINT) {
+            let center_rect = FlyHero::center_to_rect(center.x, center.y, FlyHero::DEFAULT_WIDTH, FlyHero::DEFAULT_HEIGHT);
+            self.velocity = Vector2::ZERO;
+            self.center_rect = center_rect;
       }
 
       pub fn draw(&self, hdc: HDC) {
