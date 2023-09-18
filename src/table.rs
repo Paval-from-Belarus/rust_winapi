@@ -25,8 +25,8 @@ pub struct TextRow {
       row: Vec<TextCeil>,
       max_height: usize,
       ceil_width: usize,
-      released_properties: CeilProperties,
-      pressed_properties: CeilProperties,
+      released_properties: Box<CeilProperties>,
+      pressed_properties: Box<CeilProperties>,
       // start_x: usize,
       // //the upper lower bound of row
       // start_y: usize,
@@ -36,15 +36,12 @@ pub struct TextCeil {
       text: Vec<u16>,
       rect: RECT,
       //to draw
-      properties: CeilProperties,
+      properties: *const CeilProperties,
 }
-
 pub enum CeilPropertiesType {
       Pressed,
       Released,
 }
-
-#[derive(Clone)]
 pub struct CeilProperties {
       border: HBRUSH,
       fill: HBRUSH,
@@ -155,11 +152,11 @@ impl TextRow {
                   right: (start_x + ceil_width) as LONG,
                   bottom: (start_y + ceil_height) as LONG,
             };
-            let pressed_properties = TextRow::generate_properties(Pressed);
-            let released_properties = TextRow::generate_properties(Released);
+            let pressed_properties = Box::new(TextRow::generate_properties(Pressed));
+            let released_properties = Box::new(TextRow::generate_properties(Released));
             let mut row = Vec::<TextCeil>::with_capacity(column_cnt);
             for _ in 0..column_cnt {
-                  let ceil = TextCeil::new(ceil_rect.clone(), released_properties.clone());
+                  let ceil = TextCeil::new(ceil_rect.clone(), released_properties.as_ref());
                   row.push(ceil);
                   utils::offset_rect(&mut ceil_rect, ceil_width as INT, 0);
             }
@@ -171,10 +168,10 @@ impl TextRow {
                   released_properties,
             }
       }
-      pub fn get_properties(&self, properties_type: CeilPropertiesType) -> CeilProperties {
+      pub fn get_properties(&self, properties_type: CeilPropertiesType) -> *const CeilProperties {
             match properties_type {
-                  Pressed => { self.pressed_properties.clone() }
-                  Released => { self.released_properties.clone() }
+                  Pressed => { self.pressed_properties.as_ref() }
+                  Released => { self.released_properties.as_ref() }
             }
       }
       pub fn set_char_properties(&mut self, char_width: LONG, char_height: LONG) {
@@ -265,28 +262,30 @@ impl TextRow {
 }
 
 impl TextCeil {
-      pub fn new(rect: RECT, properties: CeilProperties) -> TextCeil {
-            let text = String::from("Aasdfasdff adfa").as_os_str();
+      pub fn new(rect: RECT, properties: &CeilProperties) -> TextCeil {
+            let text = String::from("A").as_os_str();
             TextCeil { rect, text, properties }
       }
       pub fn draw(&self, hdc: HDC) {
             unsafe {
-                  FillRect(hdc, &self.rect, self.properties.fill);
-                  FrameRect(hdc, &self.rect, self.properties.border);
+                  let properties = &(*self.properties);
+                  FillRect(hdc, &self.rect, properties.fill);
+                  FrameRect(hdc, &self.rect, properties.border);
                   TextOutW(hdc, self.rect.left, self.rect.top, self.text.as_ptr() as LPCWSTR, self.text.len() as INT);
                   // DrawTextW(hdc, self.text.as_ptr() as LPCWSTR, self.text.len() as INT, &mut self.rect as _, self.properties.text_format);
             }
       }
       pub fn text_height(&self) -> usize {
-            let chars_per_line = utils::rect_width(&self.rect) / self.properties.char_width;
+            let properties = unsafe { &*self.properties };
+            let chars_per_line = utils::rect_width(&self.rect) / (properties.char_width);
             let lines_cnt = self.text.len() / (chars_per_line as usize) + 1;//at least single line
-            lines_cnt * (self.properties.char_height as usize)
+            lines_cnt * (properties.char_height as usize)
       }
       pub fn height(&self) -> usize {//ceil supports such invariant that height is only positive
             let rect = self.rect;
             (rect.bottom - rect.top) as usize
       }
-      pub fn set_properties(&mut self, properties: CeilProperties) {
+      pub fn set_properties(&mut self, properties: *const CeilProperties) {
             self.properties = properties;
       }
       pub fn set_height(&mut self, height: usize) {
