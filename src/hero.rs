@@ -8,7 +8,6 @@ use winapi::um::wingdi::{BitBlt, BITMAP, CreateCompatibleDC, CreatePatternBrush,
 use winapi::um::winnt::{LONG};
 use winapi::um::winuser::{FillRect};
 use winapi_util::console::Intense::No;
-use crate::MovementEvent;
 use crate::utils::{show_error_message, Vector2, VectorAxis};
 use crate::utils::VectorAxis::{Horizontal, Vertical};
 

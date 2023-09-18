@@ -2,9 +2,9 @@ use std::mem::MaybeUninit;
 use std::ptr;
 use std::task::ready;
 use winapi::shared::minwindef::*;
-use winapi::shared::windef::{COLORREF, HDC, HPEN, HWND, LPRECT, RECT};
+use winapi::shared::windef::{COLORREF, HBITMAP, HBRUSH, HDC, HGDIOBJ, HPEN, HWND, LPRECT, RECT};
 use winapi::um::processthreadsapi::{GetStartupInfoW, LPSTARTUPINFOW, STARTUPINFOW};
-use winapi::um::wingdi::CreatePen;
+use winapi::um::wingdi::{CreateCompatibleBitmap, CreateCompatibleDC, CreatePen, CreateSolidBrush, DeleteDC, DeleteObject, RestoreDC, SaveDC, SelectObject};
 use winapi::um::winnt::LONG;
 use winapi::um::winuser::*;
 
@@ -18,6 +18,7 @@ pub struct FormParams {
       pub(crate) width: LONG,
       pub(crate) height: LONG,
       pub(crate) startup_info: STARTUPINFOW,
+
 }
 
 pub struct Vector2 {
@@ -74,12 +75,41 @@ pub fn show_error_message(description: &str) {
             MessageBoxW(ptr::null_mut(), description.as_os_str().as_ptr(), "Error".as_os_str().as_ptr(), MB_ICONEXCLAMATION | MB_OK);
       }
 }
-
-trait RawPointerConversion<T> {
-      fn as_ptr(&self) -> *const T;
-      fn as_mut_ptr(&mut self) -> *mut T;
+pub struct BackBuffer {
+      hdc: HDC,
+      hBitmap: HBITMAP,
 }
-
+impl Drop for BackBuffer {
+      fn drop(&mut self) {
+            self.finalize();
+      }
+}
+impl BackBuffer {
+      pub fn new(hWindow: HWND, width: INT, height: INT) -> BackBuffer {
+            unsafe {
+                  let hdcWindow = GetDC(hWindow);
+                  let hdc = CreateCompatibleDC(hdcWindow);
+                  let hBitmap = CreateCompatibleBitmap(hdcWindow, width, height);
+                  SaveDC(hdc);
+                  SelectObject(hdc, hBitmap as HGDIOBJ);
+                  ReleaseDC(hWindow, hdcWindow);
+                  BackBuffer {
+                        hdc,
+                        hBitmap,
+                  }
+            }
+      }
+      pub fn getHDC(&self) -> HDC {
+            self.hdc
+      }
+      pub fn finalize(&mut self) {
+            unsafe {
+                  RestoreDC(self.hdc, -1);
+                  DeleteObject(self.hBitmap as HGDIOBJ);
+                  DeleteDC(self.hdc);
+            }
+      }
+}
 impl WindowsString for str {
       fn as_os_str(&self) -> Vec<u16> {
             use std::os::windows::ffi::OsStrExt;
@@ -101,7 +131,11 @@ pub fn copy_rect(dest: &mut RECT, source: &RECT) {
             CopyRect(dest, source);
       }
 }
-
+pub fn create_solid_brush(color: COLORREF) -> HBRUSH {
+      unsafe {
+            CreateSolidBrush(color)
+      }
+}
 pub fn create_pen(style: DWORD, width: DWORD, color: COLORREF) -> HPEN {
       unsafe {
             CreatePen(style as INT, width as INT, color)
@@ -115,13 +149,15 @@ pub fn rect_width(rect: &RECT) -> LONG {
 pub fn rect_height(rect: &RECT) -> LONG {
       LONG::abs(rect.bottom - rect.top)
 }
+
 pub fn get_client_rect(hWindow: HWND, rect: &mut RECT) {
       unsafe {
             GetClientRect(hWindow, rect);
       }
 }
+
 impl FormParams {
-      const DEFAULT_STYLE: DWORD = (WS_VISIBLE | WS_OVERLAPPEDWINDOW) & !(WS_SIZEBOX | WS_MAXIMIZEBOX);
+      const DEFAULT_STYLE: DWORD = (WS_VISIBLE | WS_OVERLAPPEDWINDOW); //& !(WS_SIZEBOX | WS_MAXIMIZEBOX);
       const DEFAULT_WIDTH: INT = 800;
       const DEFAULT_HEIGHT: INT = 600;
       pub fn getDefaultParams() -> FormParams {
@@ -142,5 +178,8 @@ impl FormParams {
                   height: FormParams::DEFAULT_HEIGHT,
                   startup_info,
             }
+      }
+      pub fn get_client_window(&self) -> RECT {
+            RECT { left: 0, top: 0, right: self.width, bottom: self.height }
       }
 }
