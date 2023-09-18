@@ -2,9 +2,9 @@ use std::mem::MaybeUninit;
 use std::ptr;
 use std::task::ready;
 use winapi::shared::minwindef::*;
-use winapi::shared::windef::{COLORREF, HBITMAP, HBRUSH, HDC, HGDIOBJ, HPEN, HWND, LPRECT, RECT};
+use winapi::shared::windef::{COLORREF, HBITMAP, HBRUSH, HDC, HGDIOBJ, HPEN, HWND, LPRECT, POINT, RECT};
 use winapi::um::processthreadsapi::{GetStartupInfoW, LPSTARTUPINFOW, STARTUPINFOW};
-use winapi::um::wingdi::{CreateCompatibleBitmap, CreateCompatibleDC, CreatePen, CreateSolidBrush, DeleteDC, DeleteObject, RestoreDC, SaveDC, SelectObject};
+use winapi::um::wingdi::{CreateCompatibleBitmap, CreateCompatibleDC, CreatePen, CreateSolidBrush, DeleteDC, DeleteObject, GetCharWidth32W, RestoreDC, SaveDC, SelectObject};
 use winapi::um::winnt::LONG;
 use winapi::um::winuser::*;
 
@@ -75,15 +75,18 @@ pub fn show_error_message(description: &str) {
             MessageBoxW(ptr::null_mut(), description.as_os_str().as_ptr(), "Error".as_os_str().as_ptr(), MB_ICONEXCLAMATION | MB_OK);
       }
 }
+
 pub struct BackBuffer {
       hdc: HDC,
       hBitmap: HBITMAP,
 }
+
 impl Drop for BackBuffer {
       fn drop(&mut self) {
             self.finalize();
       }
 }
+
 impl BackBuffer {
       pub fn new(hWindow: HWND, width: INT, height: INT) -> BackBuffer {
             unsafe {
@@ -110,6 +113,7 @@ impl BackBuffer {
             }
       }
 }
+
 impl WindowsString for str {
       fn as_os_str(&self) -> Vec<u16> {
             use std::os::windows::ffi::OsStrExt;
@@ -131,15 +135,33 @@ pub fn copy_rect(dest: &mut RECT, source: &RECT) {
             CopyRect(dest, source);
       }
 }
+
 pub fn create_solid_brush(color: COLORREF) -> HBRUSH {
       unsafe {
             CreateSolidBrush(color)
       }
 }
+
 pub fn create_pen(style: DWORD, width: DWORD, color: COLORREF) -> HPEN {
       unsafe {
             CreatePen(style as INT, width as INT, color)
       }
+}
+
+#[inline]
+pub fn point_in_rect(rect: &RECT, x: LONG, y: LONG) -> bool {
+      let point = POINT {x, y};
+      let result = unsafe { PtInRect(rect, point) };
+      result != FALSE
+}
+
+pub fn get_char_width(hdc: HDC, char: u16) -> INT {
+      let mut char_width: INT = 0;
+      let letter = char as UINT;
+      unsafe {
+            GetCharWidth32W(hdc, letter, letter, &mut char_width)
+      };
+      return char_width;
 }
 
 pub fn rect_width(rect: &RECT) -> LONG {
@@ -157,7 +179,8 @@ pub fn get_client_rect(hWindow: HWND, rect: &mut RECT) {
 }
 
 impl FormParams {
-      const DEFAULT_STYLE: DWORD = (WS_VISIBLE | WS_OVERLAPPEDWINDOW); //& !(WS_SIZEBOX | WS_MAXIMIZEBOX);
+      const DEFAULT_STYLE: DWORD = (WS_VISIBLE | WS_OVERLAPPEDWINDOW | WS_VSCROLL);
+      //& !(WS_SIZEBOX | WS_MAXIMIZEBOX);
       const DEFAULT_WIDTH: INT = 800;
       const DEFAULT_HEIGHT: INT = 600;
       pub fn getDefaultParams() -> FormParams {

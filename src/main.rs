@@ -32,8 +32,8 @@ use winapi::ctypes::__uint8;
 use winapi::um::errhandlingapi::GetLastError;
 use winapi::um::processthreadsapi::GetStartupInfoW;
 use winapi::um::winbase::{COPYFILE2_MESSAGE_Error, STARTUPINFOEXW};
-use winapi::um::wingdi::{BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, DeleteDC, DeleteObject, MAKEPOINTS, MAKEROP4, PATCOPY, PATINVERT, PS_SOLID, Rectangle, RestoreDC, RGB, SaveDC, SelectObject, SRCCOPY};
-use winapi::um::winnt::{LONG, LPCWSTR, LPSTR};
+use winapi::um::wingdi::{BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, DeleteDC, DeleteObject, GetTextMetricsW, MAKEPOINTS, MAKEROP4, PATCOPY, PATINVERT, PS_SOLID, Rectangle, RestoreDC, RGB, SaveDC, SelectObject, SRCCOPY, TEXTMETRICW};
+use winapi::um::winnt::{LONG, LPCWSTR, LPSTR, SCRUB_DATA_INPUT};
 use winapi_util::console::Color;
 use crate::background::Background;
 use crate::hero::FlyHero;
@@ -42,6 +42,10 @@ use crate::resources::{load_resources, TITLE_ICON};
 use crate::table::TextTable;
 use crate::utils::{BackBuffer, FormParams, WindowsString};
 
+pub enum ScrollEvent {
+      Up(INT),
+      Down(INT),
+}
 
 pub struct Window {
       back_buffer: Option<BackBuffer>,
@@ -114,7 +118,7 @@ impl Window {
                   UpdateWindow(hWindow);//invalidate window
                   while GetMessageW(msg.as_mut_ptr(), hWindow, 0, 0) > 0 {
                         let msg = msg.assume_init();
-                        // TranslateMessage(&msg);
+                        TranslateMessage(&msg);
                         DispatchMessageW(&msg);
                   }
                   let msg = msg.assume_init();
@@ -132,14 +136,37 @@ impl Window {
                   } else {
                         let createStruct = lParam as *const CREATESTRUCTW;
                         let this = (*createStruct).lpCreateParams as *mut Self;
-                        // (*this).hWindow = hWindow; //it's already set to it
                         SetWindowLongPtrW(hWindow, GWLP_USERDATA, this as _);
+                        (*this).init_text_metrics(hWindow);
+                        (*this).init_scroll_info(hWindow);
                   }
                   if result.is_none() {
                         result = Some(DefWindowProcW(hWindow, message, wParam, lParam));
                   }
                   result.unwrap()
             }
+      }
+      unsafe fn init_scroll_info(&mut self, hWindow: HWND) {
+            let scroll_info = SCROLLINFO {
+                  cbSize: mem::size_of::<SCROLLINFO>() as UINT,
+                  fMask: SIF_RANGE | SIF_PAGE,
+                  nMin: 0,
+                  nMax: 12,
+                  nPage: 750 / 16,
+                  nPos: 0,
+                  nTrackPos: 0,
+            };
+            let result = SetScrollInfo(hWindow, SB_VERT as INT, &scroll_info, TRUE);
+            println!("{}", result);
+      }
+      unsafe fn init_text_metrics(&mut self, hWindow: HWND) {
+            let mut metrics = MaybeUninit::<TEXTMETRICW>::uninit();
+            let hdc = GetDC(hWindow);
+            GetTextMetricsW(hdc, metrics.as_mut_ptr());
+            ReleaseDC(hWindow, hdc);
+            ;
+            let metrics = metrics.assume_init();
+            self.table.set_char_properties(metrics.tmAveCharWidth, metrics.tmHeight + metrics.tmExternalLeading);
       }
       pub fn handleWindowMessage(&mut self, hWindow: HWND, message: UINT, wParam: WPARAM, lParam: LPARAM) -> LRESULT {
             unsafe {
@@ -157,6 +184,16 @@ impl Window {
                               }
                               return 0;
                         }
+                        WM_VSCROLL => {
+                              let mut scrollInfo = MaybeUninit::<SCROLLINFO>::zeroed().assume_init();
+                              scrollInfo.cbSize = mem::size_of::<SCROLLINFO>() as UINT;
+                              scrollInfo.fMask = SIF_ALL;
+                              GetScrollInfo(hWindow, SB_VERT as INT, &mut scrollInfo);
+                              // let mut scrollInfo = scrollInfo.assume_init();
+                              // Window::do_scroll(&mut scrollInfo, hWindow);
+                              ScrollWindow(hWindow, 0, 16, ptr::null_mut(), ptr::null_mut());
+                              UpdateWindow(hWindow);
+                        }
                         WM_ERASEBKGND => {
                               return TRUE as LRESULT;
                         }
@@ -165,9 +202,12 @@ impl Window {
                               let result = GetClientRect(hWindow, rect.as_mut_ptr());
                               if result != FALSE {
                                     let rect = rect.assume_init();
-                                    self.table.resize(&rect);
+                                    let hdc = GetDC(hWindow);
+                                    self.table.resize(hdc, &rect);
+                                    ReleaseDC(hWindow, hdc);
                                     self.client_window = rect;
                                     self.back_buffer = Some(BackBuffer::new(hWindow, utils::rect_width(&rect), utils::rect_height(&rect)));
+
                                     InvalidateRect(hWindow, ptr::null_mut(), TRUE);
                               } else {
                                     utils::show_error_message("invalid sizing");
@@ -183,13 +223,17 @@ impl Window {
                         WM_LBUTTONDOWN => {
                               let x = GET_X_LPARAM!(lParam);
                               let y = GET_Y_LPARAM!(lParam);
+                              // utils::show_error_message(&(x.to_string() + &" <->" + &y.to_string()));
                               self.table.handle_click(x, y);
                               return 0;
                         }
                         WM_SETFOCUS => {
-
-                              CreateCaret(hWindow, 1 as HBITMAP, 1, 0);
-
+                              // CreateCaret(hWindow, 1 as HBITMAP, 1, 0);
+                        }
+                        WM_CHAR => {
+                              let hdc = GetDC(hWindow);
+                              self.table.handle_type(hdc, wParam as INT);
+                              ReleaseDC(hWindow, hdc);
                         }
                         WM_DESTROY => {
                               self.background.finalize();
@@ -201,6 +245,16 @@ impl Window {
                   }
                   DefWindowProcW(hWindow, message, wParam, lParam)
             }
+      }
+      fn do_scroll(scroll_info: &mut SCROLLINFO, hWindow: HWND) {
+            let pos_y = scroll_info.nPos;
+            print!("{}", pos_y);
+            if pos_y == 42 {
+                  print!("Nothing");
+            }
+            // unsafe {
+            //       ScrollWindow(hWindow, 1, 100, ptr::null_mut(), ptr::null_mut());
+            // }
       }
 }
 
