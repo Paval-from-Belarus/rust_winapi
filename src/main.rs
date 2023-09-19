@@ -21,7 +21,7 @@ use winapi::shared::minwindef::*;
 use winapi::shared::windef::*;
 use winapi::um::libloaderapi::{GetModuleFileNameW, GetModuleHandleW};
 use winapi::um::winuser::*;
-use std::{cmp, mem, ptr};
+use std::{cmp, isize, mem, ptr};
 use std::borrow::Cow;
 use std::cell::OnceCell;
 use std::convert::Into;
@@ -29,6 +29,7 @@ use std::ffi::c_int;
 use std::ops::AddAssign;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use winapi::ctypes::__uint8;
+use winapi::shared::winerror::TRUST_E_ACTION_UNKNOWN;
 use winapi::um::errhandlingapi::GetLastError;
 use winapi::um::processthreadsapi::GetStartupInfoW;
 use winapi::um::winbase::{COPYFILE2_MESSAGE_Error, STARTUPINFOEXW};
@@ -65,7 +66,7 @@ impl Window {
                   GetModuleHandleW(ptr::null_mut())
             };
             let mut resources = load_resources(hInstance).expect("Failed to load resources");
-            let background = Background::solid(RGB(100, 200, 50));
+            let background = Background::solid(RGB(100, 200, 50), params.width, params.height);
             let client_window = params.get_client_window();
             let table = TextTable::new(&client_window, 12, 10);
             let mut window = Box::new(Window {
@@ -138,7 +139,6 @@ impl Window {
                         let this = (*createStruct).lpCreateParams as *mut Self;
                         SetWindowLongPtrW(hWindow, GWLP_USERDATA, this as _);
                         (*this).init_text_metrics(hWindow);
-                        (*this).init_scroll_info(hWindow);
                   }
                   if result.is_none() {
                         result = Some(DefWindowProcW(hWindow, message, wParam, lParam));
@@ -170,32 +170,70 @@ impl Window {
       }
       pub fn handleWindowMessage(&mut self, hWindow: HWND, message: UINT, wParam: WPARAM, lParam: LPARAM) -> LRESULT {
             unsafe {
+                  static mut Y_CURRENT_SCROLL: isize = 0;
+                  static mut Y_MAX_SCROLL: isize = 0;
                   match message {
                         WM_PAINT => {
                               if let Some(back_buffer) = &self.back_buffer {
                                     let hdc_back = back_buffer.getHDC();
-                                    self.background.draw(&self.client_window, hdc_back);
+                                    self.background.draw(hdc_back);
                                     self.table.draw(hdc_back);
                                     let mut paint_struct = MaybeUninit::<PAINTSTRUCT>::uninit();
                                     let hdc = BeginPaint(hWindow, paint_struct.as_mut_ptr());
-                                    BitBlt(hdc, 0, 0, self.client_window.right, self.client_window.bottom, hdc_back, 0, 0, SRCCOPY);
+                                    BitBlt(hdc, 0, 0, self.client_window.right, self.client_window.bottom, hdc_back, 0, Y_CURRENT_SCROLL as INT, SRCCOPY);
                                     EndPaint(hWindow, &paint_struct.assume_init());
-                                    InvalidateRect(hWindow, ptr::null_mut(), TRUE);
                               }
                               return 0;
                         }
                         WM_VSCROLL => {
+                              let x_delta = 0;
+                              let mut y_delta = 0;
+                              let mut y_new_pos = Y_CURRENT_SCROLL;
+                              match LOWORD(wParam as DWORD) as isize {
+                                    SB_PAGEUP => {
+                                          y_new_pos = Y_CURRENT_SCROLL - 30;
+                                    }
+                                    SB_PAGEDOWN => {
+                                          y_new_pos = Y_CURRENT_SCROLL + 30;
+                                    }
+                                    SB_LINEUP => {
+                                          y_new_pos = Y_CURRENT_SCROLL - 10;
+                                    }
+                                    SB_LINEDOWN => {
+                                          y_new_pos = Y_CURRENT_SCROLL + 10;
+                                    }
+                                    SB_THUMBPOSITION => {
+                                          y_new_pos = HIWORD(wParam as DWORD) as isize;
+                                    }
+                                    _ => {
+                                          y_new_pos = Y_CURRENT_SCROLL;
+                                    }
+                              }
+                              y_new_pos = isize::max(0, y_new_pos);
+                              y_new_pos = isize::min(y_new_pos, Y_MAX_SCROLL);
+                              if y_new_pos == Y_CURRENT_SCROLL {
+                                    return DefWindowProcA(hWindow, message, wParam, lParam);
+                              }
+                              y_delta = y_new_pos - Y_CURRENT_SCROLL;
+                              Y_CURRENT_SCROLL = y_new_pos;
+                              print!("scroll_pos: {}", Y_CURRENT_SCROLL);
+                              ScrollWindowEx(hWindow, -x_delta, (-y_delta) as i32, ptr::null_mut(), ptr::null_mut(),
+                                             ptr::null_mut(), ptr::null_mut(), SW_INVALIDATE);
                               let mut scrollInfo = MaybeUninit::<SCROLLINFO>::zeroed().assume_init();
                               scrollInfo.cbSize = mem::size_of::<SCROLLINFO>() as UINT;
-                              scrollInfo.fMask = SIF_ALL;
-                              GetScrollInfo(hWindow, SB_VERT as INT, &mut scrollInfo);
-                              // let mut scrollInfo = scrollInfo.assume_init();
-                              // Window::do_scroll(&mut scrollInfo, hWindow);
-                              ScrollWindow(hWindow, 0, 16, ptr::null_mut(), ptr::null_mut());
-                              UpdateWindow(hWindow);
+                              scrollInfo.fMask = SIF_POS;
+                              scrollInfo.nPos = Y_CURRENT_SCROLL as INT;
+                              SetScrollInfo(hWindow, SB_VERT as INT, &scrollInfo, TRUE);
+                              InvalidateRect(hWindow, ptr::null_mut(), TRUE);
                         }
                         WM_ERASEBKGND => {
                               return TRUE as LRESULT;
+                        }
+                        WM_GETMINMAXINFO => {
+                              let min_max_info  = &mut (*(lParam as *mut MINMAXINFO));
+                              min_max_info.ptMinTrackSize.x = 200;
+                              min_max_info.ptMinTrackSize.y = 200;
+
                         }
                         WM_SIZE => {
                               let mut rect = MaybeUninit::<RECT>::uninit();
@@ -205,35 +243,46 @@ impl Window {
                                     let hdc = GetDC(hWindow);
                                     self.table.resize(hdc, &rect);
                                     ReleaseDC(hWindow, hdc);
+                                    let table_height = self.table.height();
                                     self.client_window = rect;
-                                    self.back_buffer = Some(BackBuffer::new(hWindow, utils::rect_width(&rect), utils::rect_height(&rect)));
-
+                                    self.back_buffer = Some(BackBuffer::new(hWindow, utils::rect_width(&rect), table_height as INT));
+                                    self.background.resize(utils::rect_width(&rect), table_height as LONG);
+                                    let window_height = utils::rect_height(&rect) as isize;
+                                    Y_MAX_SCROLL = isize::max((table_height as isize) - window_height, 0);
+                                    Y_CURRENT_SCROLL = isize::min(Y_CURRENT_SCROLL, Y_MAX_SCROLL);
+                                    Window::update_scroll_info(hWindow, Y_CURRENT_SCROLL as INT, window_height as UINT, self.table.height() as INT);
+                                    // println!("table_height: {}", self.table.height());
                                     InvalidateRect(hWindow, ptr::null_mut(), TRUE);
                               } else {
                                     utils::show_error_message("invalid sizing");
                               }
-
-                              // unsafe {
-                              //       GetClientRect(hWindow, &mut self.clientWindow);
-                              //       let error_code = GetLastError();
-                              //       utils::show_error_message(&("Error with code".to_owned() + &error_code.to_string()));
-                              // }
                               return 0;
                         }
                         WM_LBUTTONDOWN => {
                               let x = GET_X_LPARAM!(lParam);
-                              let y = GET_Y_LPARAM!(lParam);
+                              let y = GET_Y_LPARAM!(lParam) + Y_CURRENT_SCROLL as LONG;
                               // utils::show_error_message(&(x.to_string() + &" <->" + &y.to_string()));
                               self.table.handle_click(x, y);
+                              InvalidateRect(hWindow, ptr::null_mut(), TRUE);
                               return 0;
                         }
-                        WM_SETFOCUS => {
-                              // CreateCaret(hWindow, 1 as HBITMAP, 1, 0);
-                        }
                         WM_CHAR => {
+                              let old_table_height = self.table.height();
                               let hdc = GetDC(hWindow);
                               self.table.handle_type(hdc, wParam as INT);
                               ReleaseDC(hWindow, hdc);
+                              if old_table_height != self.table.height() {
+                                    let window_height = utils::rect_height(&self.client_window) as isize;
+                                    let table_height = self.table.height();
+                                    Y_MAX_SCROLL = isize::max((table_height as isize) - window_height, 0);
+                                    Y_CURRENT_SCROLL = isize::min(Y_CURRENT_SCROLL, Y_MAX_SCROLL);
+                                    Window::update_scroll_info(hWindow, Y_CURRENT_SCROLL as INT, window_height as UINT, table_height as INT);
+                                    self.back_buffer = Some(BackBuffer::new(hWindow, utils::rect_width(&self.client_window), table_height as INT));
+                                    self.background.resize(utils::rect_width(&self.client_window), table_height as LONG);
+                                    // let lParam = (window_height << 16) | (utils::rect_width(&self.client_window) as isize);
+                                    // SendMessageW(hWindow, WM_SIZE, SIZE_RESTORED, lParam);
+                              }
+                              InvalidateRect(hWindow, ptr::null_mut(), TRUE);
                         }
                         WM_DESTROY => {
                               self.background.finalize();
@@ -246,15 +295,19 @@ impl Window {
                   DefWindowProcW(hWindow, message, wParam, lParam)
             }
       }
-      fn do_scroll(scroll_info: &mut SCROLLINFO, hWindow: HWND) {
-            let pos_y = scroll_info.nPos;
-            print!("{}", pos_y);
-            if pos_y == 42 {
-                  print!("Nothing");
+      fn update_scroll_info(hWindow: HWND, current_scroll_offset: INT, window_height: UINT, table_height: INT) {
+            let scroll_info = SCROLLINFO {
+                  cbSize: mem::size_of::<SCROLLINFO>() as UINT,
+                  fMask: SIF_RANGE | SIF_PAGE | SIF_POS,
+                  nMin: 0,
+                  nMax: table_height,
+                  nPage: window_height,
+                  nPos: current_scroll_offset,
+                  nTrackPos: 0,
+            };
+            unsafe {
+                  SetScrollInfo(hWindow, SB_VERT as INT, &scroll_info, TRUE);
             }
-            // unsafe {
-            //       ScrollWindow(hWindow, 1, 100, ptr::null_mut(), ptr::null_mut());
-            // }
       }
 }
 
