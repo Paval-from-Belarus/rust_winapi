@@ -130,7 +130,7 @@ impl TextTable {
             self.table_width = table_width;
       }
       pub fn handle_click(&mut self, x: LONG, y: LONG) {
-            if x < 0 || x > (self.table_width as LONG) || y < 0 || y > (self.table_height as LONG) {
+            if x < 0 || x > (self.table_width as LONG) || y < 0 || y > (self.height() as LONG) {
                   return;
             }
             debug_assert!(self.rows.len() > 0);
@@ -184,8 +184,11 @@ impl TextTable {
                   }
             }
       }
-      pub fn scroll(&mut self, delta: INT) {
-
+      pub fn height(&self) -> usize {
+            return self.rows.iter()
+                .map(|row| row.max_height)
+                .reduce(|sum, height| sum + height)
+                .unwrap();
       }
       fn release_old_ceil(&mut self) {
             if let Some(last_chosen) = self.chosen_ceil {
