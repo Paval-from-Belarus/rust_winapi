@@ -1,0 +1,474 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="CMakeRunConfigurationManager">
+    <generated />
+  </component>
+  <component name="CMakeSettings">
+    <configurations>
+      <configuration PROFILE_NAME="Debug" ENABLED="true" CONFIG_NAME="Debug" />
+    </configurations>
+  </component>
+  <component name="CargoProjects">
+    <cargoProject FILE="$PROJECT_DIR$/Cargo.toml" />
+    <cargoProject FILE="$PROJECT_DIR$/string_search/Cargo.toml" />
+    <cargoProject FILE="$PROJECT_DIR$/static-lab-3/dynamic-lab-3/Cargo.toml" />
+    <cargoProject FILE="$PROJECT_DIR$/static_string_replace/Cargo.toml" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="8d768986-cfc2-48b0-ac07-b2353b081235" name="Changes" comment="fix window sizing">
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.lab_1.dir/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.lab_1.dir/.idea/codeStyles/codeStyleConfig.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.lab_1.dir/.idea/encodings.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.lab_1.dir/.idea/indexLayout.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.lab_1.dir/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.lab_1.dir/.idea/vcs.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/codeStyles/codeStyleConfig.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/compilerexplorer.settings.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build.rs" beforeDir="false" afterPath="$PROJECT_DIR$/static_lab_3/build.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/background.bmp" beforeDir="false" afterPath="$PROJECT_DIR$/static_lab_3/resources/background.bmp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/hero-mask.bmp" beforeDir="false" afterPath="$PROJECT_DIR$/static_lab_3/resources/hero-mask.bmp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/hero.bmp" beforeDir="false" afterPath="$PROJECT_DIR$/static_lab_3/resources/hero.bmp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/red-background.bmp" beforeDir="false" afterPath="$PROJECT_DIR$/static_lab_3/resources/red-background.bmp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/resources.rc" beforeDir="false" afterPath="$PROJECT_DIR$/static_lab_3/resources/resources.rc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/rust-icon.ico" beforeDir="false" afterPath="$PROJECT_DIR$/static_lab_3/resources/rust-icon.ico" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/rust-toolchain.toml" beforeDir="false" afterPath="$PROJECT_DIR$/rust-toolchain.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/background.rs" beforeDir="false" afterPath="$PROJECT_DIR$/static_lab_3/src/background.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/hero.rs" beforeDir="false" afterPath="$PROJECT_DIR$/static_lab_3/src/hero.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/static_lab_3/src/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/resources.rs" beforeDir="false" afterPath="$PROJECT_DIR$/static_lab_3/src/resources.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/table.rs" beforeDir="false" afterPath="$PROJECT_DIR$/static_lab_3/src/table.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/utils.rs" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="ExternalProjectsData">
+    <projectState path="$PROJECT_DIR$">
+      <ProjectState />
+    </projectState>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Rust File" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitSEFilterConfiguration">
+    <file-type-list>
+      <filtered-out-file-type name="LOCAL_BRANCH" />
+      <filtered-out-file-type name="REMOTE_BRANCH" />
+      <filtered-out-file-type name="TAG" />
+      <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
+    </file-type-list>
+  </component>
+  <component name="MacroExpansionManager">
+    <option name="directoryName" value="1uvbvxtl" />
+  </component>
+  <component name="MakefileLocalSettings">
+    <option name="availableProjects">
+      <map>
+        <entry>
+          <key>
+            <ExternalProjectPojo>
+              <option name="name" value="lab_1" />
+              <option name="path" value="$PROJECT_DIR$" />
+            </ExternalProjectPojo>
+          </key>
+          <value>
+            <list>
+              <ExternalProjectPojo>
+                <option name="name" value="lab_1" />
+                <option name="path" value="$PROJECT_DIR$" />
+              </ExternalProjectPojo>
+            </list>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="projectSyncType">
+      <map>
+        <entry key="$PROJECT_DIR$" value="RE_IMPORT" />
+      </map>
+    </option>
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
+  <component name="ProjectApplicationVersion">
+    <option name="ide" value="CLion" />
+    <option name="majorVersion" value="2023" />
+    <option name="minorVersion" value="2.1" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 1
+}</component>
+  <component name="ProjectId" id="2UzQj3qG3oWOfU8iAM7xFQMsoOq" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="autoscrollToSource" value="true" />
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
+    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;lab-3&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/Paval/Backup/linux/lab_1&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;org.rust.cargo.project.model.PROJECT_DISCOVERY&quot;: &quot;true&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;configurable.group.build&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="E:\linux\lab_1\resources" />
+      <recent name="$PROJECT_DIR$" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="E:\linux\lab_1" />
+      <recent name="E:\linux\lab_1\lab-3" />
+      <recent name="E:\linux\lab_1\lab-3\src" />
+      <recent name="E:\linux\lab_1\resources" />
+    </key>
+  </component>
+  <component name="RsExternalLinterProjectSettings">
+    <option name="runOnTheFly" value="true" />
+  </component>
+  <component name="RtosSettings">
+    <option name="rtosEnabled" value="true" />
+  </component>
+  <component name="RunAnythingCache">
+    <option name="myCommands">
+      <command value="cargo rustc" />
+      <command value="cargo check --all-targets" />
+      <command value="cargo check --target x86_64-pc-windows-gnu" />
+    </option>
+  </component>
+  <component name="RunManager" selected="Cargo.run static linking">
+    <configuration name="Run static_lab-3" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="command" value="run --package static_lab-3 --bin static_lab-3" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <option name="emulateTerminal" value="true" />
+      <option name="channel" value="DEFAULT" />
+      <option name="requiredFeatures" value="true" />
+      <option name="allFeatures" value="false" />
+      <option name="withSudo" value="false" />
+      <option name="buildTarget" value="REMOTE" />
+      <option name="backtrace" value="SHORT" />
+      <envs />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="build dll" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
+      <option name="command" value="build --package string_replace" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <option name="emulateTerminal" value="true" />
+      <option name="channel" value="DEFAULT" />
+      <option name="requiredFeatures" value="true" />
+      <option name="allFeatures" value="false" />
+      <option name="withSudo" value="false" />
+      <option name="buildTarget" value="REMOTE" />
+      <option name="backtrace" value="SHORT" />
+      <envs />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="build utils" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
+      <option name="command" value="build --package utils" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <option name="emulateTerminal" value="true" />
+      <option name="channel" value="DEFAULT" />
+      <option name="requiredFeatures" value="true" />
+      <option name="allFeatures" value="false" />
+      <option name="withSudo" value="false" />
+      <option name="buildTarget" value="REMOTE" />
+      <option name="backtrace" value="SHORT" />
+      <envs />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="build workspace" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
+      <option name="command" value="build  --workspace" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <option name="emulateTerminal" value="true" />
+      <option name="channel" value="DEFAULT" />
+      <option name="requiredFeatures" value="true" />
+      <option name="allFeatures" value="false" />
+      <option name="withSudo" value="false" />
+      <option name="buildTarget" value="REMOTE" />
+      <option name="backtrace" value="SHORT" />
+      <envs />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="check" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="command" value="check --target x86_64-pc-windows-gnu" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <option name="emulateTerminal" value="true" />
+      <option name="channel" value="DEFAULT" />
+      <option name="requiredFeatures" value="true" />
+      <option name="allFeatures" value="false" />
+      <option name="withSudo" value="false" />
+      <option name="buildTarget" value="REMOTE" />
+      <option name="backtrace" value="SHORT" />
+      <envs />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="run static linking" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="command" value="run --package static_lab-3 --bin static_lab-3" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <option name="emulateTerminal" value="true" />
+      <option name="channel" value="DEFAULT" />
+      <option name="requiredFeatures" value="true" />
+      <option name="allFeatures" value="false" />
+      <option name="withSudo" value="false" />
+      <option name="buildTarget" value="REMOTE" />
+      <option name="backtrace" value="FULL" />
+      <envs />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="rustc" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="command" value="rustc" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <option name="emulateTerminal" value="true" />
+      <option name="channel" value="DEFAULT" />
+      <option name="requiredFeatures" value="true" />
+      <option name="allFeatures" value="false" />
+      <option name="withSudo" value="false" />
+      <option name="buildTarget" value="REMOTE" />
+      <option name="backtrace" value="SHORT" />
+      <envs />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Unnamed" type="MAKEFILE_TARGET_RUN_CONFIGURATION" factoryName="Makefile" nameIsGenerated="true">
+      <makefile filename="" target="" workingDirectory="" arguments="">
+        <envs />
+      </makefile>
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Cargo.build utils" />
+      <item itemvalue="Cargo.build workspace" />
+      <item itemvalue="Cargo.build dll" />
+      <item itemvalue="Cargo.Run static_lab-3" />
+      <item itemvalue="Cargo.run static linking" />
+      <item itemvalue="Cargo.check" />
+      <item itemvalue="Cargo.rustc" />
+      <item itemvalue="Makefile Target.Unnamed" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Cargo.run static linking" />
+        <item itemvalue="Cargo.Run static_lab-3" />
+        <item itemvalue="Cargo.rustc" />
+        <item itemvalue="Cargo.check" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="RustProjectSettings">
+    <option name="toolchainHomeDirectory" value="$USER_HOME$/.cargo/bin" />
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="8d768986-cfc2-48b0-ac07-b2353b081235" name="Changes" comment="" />
+      <created>1693940060344</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1693940060344</updated>
+      <workItem from="1693940061325" duration="6114000" />
+      <workItem from="1693946210615" duration="22000" />
+      <workItem from="1693946397198" duration="18000" />
+      <workItem from="1693947004239" duration="34000" />
+      <workItem from="1693947083908" duration="485000" />
+      <workItem from="1693947639087" duration="2000" />
+      <workItem from="1693948143204" duration="16000" />
+      <workItem from="1693948304653" duration="270000" />
+      <workItem from="1693948703349" duration="3701000" />
+      <workItem from="1693952411809" duration="52000" />
+      <workItem from="1693952471530" duration="127000" />
+      <workItem from="1693952605369" duration="418000" />
+      <workItem from="1693953028967" duration="148000" />
+      <workItem from="1693953184192" duration="427000" />
+      <workItem from="1694349580886" duration="133000" />
+      <workItem from="1694356706000" duration="214000" />
+      <workItem from="1694356929803" duration="186000" />
+      <workItem from="1694357125197" duration="27903000" />
+      <workItem from="1694440987358" duration="9475000" />
+      <workItem from="1694450597179" duration="4339000" />
+      <workItem from="1694454992366" duration="846000" />
+      <workItem from="1694456125797" duration="674000" />
+      <workItem from="1694468749187" duration="228000" />
+      <workItem from="1694469021999" duration="110000" />
+      <workItem from="1694528183120" duration="9000" />
+      <workItem from="1694529236770" duration="70000" />
+      <workItem from="1694530270854" duration="140000" />
+      <workItem from="1694531207614" duration="4160000" />
+      <workItem from="1694538801430" duration="956000" />
+      <workItem from="1694540857385" duration="3053000" />
+      <workItem from="1694547489090" duration="3391000" />
+      <workItem from="1694553303475" duration="1199000" />
+      <workItem from="1694602582783" duration="119000" />
+      <workItem from="1694609168751" duration="3694000" />
+      <workItem from="1694949102173" duration="303000" />
+      <workItem from="1694976989970" duration="13579000" />
+      <workItem from="1694990750374" duration="1379000" />
+      <workItem from="1695028554435" duration="43743000" />
+      <workItem from="1695107335431" duration="9627000" />
+      <workItem from="1695126890694" duration="424000" />
+      <workItem from="1695210480419" duration="615000" />
+      <workItem from="1695212637411" duration="2794000" />
+      <workItem from="1695215479865" duration="948000" />
+      <workItem from="1695216453745" duration="2551000" />
+      <workItem from="1695645585769" duration="7615000" />
+    </task>
+    <task id="LOCAL-00001" summary="add action logic">
+      <created>1694387365699</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1694387365699</updated>
+    </task>
+    <task id="LOCAL-00002" summary="update sprites">
+      <created>1694447165056</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1694447165056</updated>
+    </task>
+    <task id="LOCAL-00003" summary="add animation">
+      <created>1694455782660</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1694455782660</updated>
+    </task>
+    <task id="LOCAL-00004" summary="add slow movement">
+      <created>1694546301223</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1694546301223</updated>
+    </task>
+    <task id="LOCAL-00005" summary="some release changes">
+      <created>1694977192068</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1694977192068</updated>
+    </task>
+    <task id="LOCAL-00006" summary="fix window sizing">
+      <created>1695210623663</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1695210623663</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="add action logic" />
+    <MESSAGE value="update sprites" />
+    <MESSAGE value="add animation" />
+    <MESSAGE value="add slow movement" />
+    <MESSAGE value="some release changes" />
+    <MESSAGE value="fix window sizing" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix window sizing" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$USER_HOME$/.rustup/toolchains/nightly-x86_64-pc-windows-msvc/lib/rustlib/src/rust/library/core/src/mem/maybe_uninit.rs</url>
+          <line>488</line>
+          <option name="timeStamp" value="104" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/static_lab_3/src/main.rs</url>
+          <line>163</line>
+          <option name="timeStamp" value="192" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/static_lab_3/src/main.rs</url>
+          <line>263</line>
+          <option name="timeStamp" value="200" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+    <watches-manager>
+      <configuration name="CargoCommandRunConfiguration">
+        <watch expression="window.back_buffer.variant1.NAME" />
+      </configuration>
+    </watches-manager>
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
+  </component>
+</project>
