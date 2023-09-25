@@ -12,7 +12,7 @@ use winapi::shared::minwindef::{DWORD, HINSTANCE, LPVOID};
 use winapi::um::sysinfoapi::{GetSystemInfo, SYSTEM_INFO};
 use winapi::um::winbase::lstrlenA;
 use winapi::um::memoryapi::{VirtualQueryEx};
-use winapi::um::winnt::{DLL_PROCESS_ATTACH, DLL_PROCESS_DETACH, HANDLE, INT, MEM_COMMIT, MEMORY_BASIC_INFORMATION, PAGE_EXECUTE_READWRITE, PAGE_READWRITE};
+use winapi::um::winnt::{DLL_PROCESS_ATTACH, DLL_PROCESS_DETACH, HANDLE, INT, MEM_COMMIT, MEMORY_BASIC_INFORMATION, PAGE_EXECUTE_READWRITE, PAGE_GUARD, PAGE_READWRITE};
 use winapi_util::console::Intense::No;
 use utils::StringSearchParams;
 use crate::SearchResult::{Found, InvalidParams, InvalidStringValues, NotFound};
@@ -52,15 +52,18 @@ fn get_system_info() -> SYSTEM_INFO {
 
 fn replace_as_pattern(replaceable: &mut [u8], pattern: &[u8]) {
       let min_length = usize::min(replaceable.len(), pattern.len());
-      for i  in 0..min_length {
+      for i in 0..min_length {
             replaceable[i] = pattern[i];
       }
 }
 
 fn is_accessible_memory(memory_info: MEMORY_BASIC_INFORMATION) -> bool {
       let protect = memory_info.Protect;
-      let is_read_write_accessible = protect == PAGE_READWRITE || protect == PAGE_EXECUTE_READWRITE;
-      return is_read_write_accessible && memory_info.State == MEM_COMMIT;
+      let is_read_write_accessible =
+          (protect & PAGE_READWRITE) == PAGE_READWRITE ||
+          (protect & PAGE_EXECUTE_READWRITE) == PAGE_EXECUTE_READWRITE;
+      let is_not_guard_page = (protect & PAGE_GUARD) != PAGE_GUARD;
+      return is_read_write_accessible && memory_info.State == MEM_COMMIT && is_not_guard_page;
 }
 
 fn find_string_in_range(pattern: &[u8], base_offset: *const u8, limit_offset: *const u8) -> Option<&mut [u8]> {
@@ -68,6 +71,11 @@ fn find_string_in_range(pattern: &[u8], base_offset: *const u8, limit_offset: *c
       let mut byte_offset = base_offset;
       let mut pivot = 0;
       while byte_offset < limit_offset && pivot < pattern.len() {
+            // if ptr::eq(pattern.as_ptr(), byte_offset) {
+            //     byte_offset = unsafe {byte_offset.byte_add(pattern.len())};
+            //     pivot = 0;
+            //     continue;
+            // }
             let letter = unsafe { byte_offset.read() };
             if letter == pattern[pivot] {
                   pivot += 1;
@@ -77,7 +85,7 @@ fn find_string_in_range(pattern: &[u8], base_offset: *const u8, limit_offset: *c
             byte_offset = unsafe { byte_offset.byte_add(1) };
       }
       let result;
-      if pivot == pattern.len() {
+      if byte_offset < limit_offset && pivot == pattern.len() {
             let byte_offset = unsafe { byte_offset.offset(-(pattern.len() as isize)) } as *mut u8;
             let bytes = unsafe { &mut *ptr::slice_from_raw_parts_mut(byte_offset, pattern.len()) };
             result = Some(bytes);
@@ -87,7 +95,7 @@ fn find_string_in_range(pattern: &[u8], base_offset: *const u8, limit_offset: *c
       return result;
 }
 
-fn find_string(search: &[u8], process_handle: HANDLE) -> Option<&mut [u8]> { //return found CString
+fn find_string(pattern: &[u8], process_handle: HANDLE) -> Option<&mut [u8]> { //return found CString
       let system_info = get_system_info();
       let mut memory_info = MaybeUninit::<MEMORY_BASIC_INFORMATION>::uninit();
       let mut base_offset = system_info.lpMinimumApplicationAddress;
@@ -102,7 +110,7 @@ fn find_string(search: &[u8], process_handle: HANDLE) -> Option<&mut [u8]> { //r
             if query_result == mem::size_of::<MEMORY_BASIC_INFORMATION>() {
                   let memory_info = unsafe { memory_info.assume_init() };
                   let limit_offset = unsafe { base_offset.byte_add(memory_info.RegionSize) };
-                  if is_accessible_memory(memory_info) && let Some(found_string) = find_string_in_range(&search, base_offset as _, limit_offset as _) {
+                  if is_accessible_memory(memory_info) && let Some(found_string) = find_string_in_range(&pattern, base_offset as _, limit_offset as _) {
                         search_result = Some(found_string);
                   }
                   base_offset = limit_offset;
@@ -110,7 +118,7 @@ fn find_string(search: &[u8], process_handle: HANDLE) -> Option<&mut [u8]> { //r
                   return None;//we already exceed impossible conditions
             }
       }
-      return None;
+      return search_result;
 }
 
 const MAX_STRING_SIZE: usize = 255;
@@ -131,7 +139,7 @@ pub extern fn replace(params: *const StringSearchParams) -> INT {
             return InvalidParams as INT;
       }
       let params = unsafe { &*params };
-      let result_code: SearchResult;
+      let mut result_code: SearchResult;
       if is_valid_params(params) {
             let search_pattern = unsafe { CStr::from_ptr(params.szSearch) }.to_bytes();
             let replace_pattern = unsafe { CStr::from_ptr(params.szReplace) }.to_bytes();
