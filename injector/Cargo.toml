@@ -1,0 +1,17 @@
+[package]
+name = "injector"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+winapi = { version = "0.3.9", features = ["winuser", "libloaderapi", "combaseapi", "objbase", "shobjidl", "winerror", "mmsystem", "windef", "processthreadsapi", "tlhelp32", "handleapi", "memoryapi"] }
+winapi-util = "0.1.5"
+num_enum = "0.7.0"
+text_io = "0.1.12"
+utils = { path = "../utils" }
+[target.'cfg(target_os = "windows")'.features]
+default = ["windows"]
+[build-dependencies]
+embed-resource = "2.3.0"

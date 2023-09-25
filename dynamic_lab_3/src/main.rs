@@ -15,15 +15,6 @@ extern crate utils;
 const DLL_PATH: &str = "string_replace.dll";
 const FUNCTION_NAME: &str = "replace\0";
 
-pub fn load_library(library_name: &str) -> HMODULE {
-    return unsafe { LoadLibraryW(library_name.as_os_str().as_ptr() as _) };
-}
-
-pub fn free_library(dll_module: HMODULE) {
-    unsafe {
-        FreeLibrary(dll_module);
-    }
-}
 
 pub fn find_function(dll_module: HMODULE, function_name: &str) -> Option<SearchReplaceHandler> {
     let handler_ptr = unsafe { GetProcAddress(dll_module, function_name.as_ptr() as _) };
@@ -65,7 +56,7 @@ pub fn run(handler: SearchReplaceHandler) {
         hProcess: handle,
     };
     let static_string = b"STATIC_STRING\0";//pure CString
-    utils::show_alert_message("Static replacement. Origin string: ", String::from_utf8(static_string.to_vec()).unwrap().as_str());
+    // utils::show_alert_message("Static replacement. Origin string: ", String::from_utf8(static_string.to_vec()).unwrap().as_str());
     params.szSearch = static_string.as_ptr() as _;
     params.cbSearchLen = static_string.len();
     if let Err(error_code) = replace_string(&params, handler) {
@@ -78,14 +69,14 @@ pub fn run(handler: SearchReplaceHandler) {
         .for_each(|letter| heap_string.push(*letter));
     params.szSearch = heap_string.as_ptr() as _;
     params.cbSearchLen = heap_string.len();
-    utils::show_alert_message("Heap replacement. Origin string: ", String::from_utf8(heap_string.clone()).unwrap().as_str());
+    // utils::show_alert_message("Heap replacement. Origin string: ", String::from_utf8(heap_string.clone()).unwrap().as_str());
     if let Err(error_code) = replace_string(&params, handler) {
         utils::show_error_message_with_error_code("Heap replacement failed with error code ", error_code);
     } else {
         utils::show_alert_message("Finished successfully. Result string: ", String::from_utf8(heap_string.clone()).unwrap().as_str());
     }
     let stack_string = [b'S', b'T', b'A', b'C', b'K', b'_', b'S', b'T', b'R', b'I', b'N', b'G', 0];
-    utils::show_alert_message("Stack replacement. Origin string: ", String::from_utf8(stack_string.to_vec()).unwrap().as_str());
+    // utils::show_alert_message("Stack replacement. Origin string: ", String::from_utf8(stack_string.to_vec()).unwrap().as_str());
     params.szSearch = stack_string.as_ptr() as _;
     params.cbSearchLen = stack_string.len();
     if let Err(error_code) = replace_string(&params, handler) {
@@ -96,15 +87,14 @@ pub fn run(handler: SearchReplaceHandler) {
 }
 
 fn main() {
-    let dll_module = load_library(DLL_PATH);
+    let dll_module = utils::load_library(DLL_PATH);
     if !dll_module.is_null() {
         let handler = find_function(dll_module, FUNCTION_NAME);
         if handler.is_some() {
             run(handler.unwrap());
-            run(handler.unwrap());
         } else {
             utils::show_error_message("function handler is not found");
-            free_library(dll_module);
+            utils::free_library(dll_module);
         }
     } else {
         utils::show_error_message("string_replace.dll is not found");
