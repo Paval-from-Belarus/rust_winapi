@@ -25,7 +25,9 @@ pub struct FormParams {
 #[allow(non_snake_case)]
 pub struct StringSearchParams {
     pub szSearch: *const c_char,
+    pub cbSearchLen: usize,
     pub szReplace: *const c_char,
+    pub cbReplaceLen: usize,
     pub hProcess: HANDLE
 }
 pub struct Vector2 {
@@ -217,16 +219,5 @@ impl FormParams {
     }
     pub fn get_client_window(&self) -> RECT {
         RECT { left: 0, top: 0, right: self.width, bottom: self.height }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
     }
 }

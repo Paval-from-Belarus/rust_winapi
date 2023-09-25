@@ -19,33 +19,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8d768986-cfc2-48b0-ac07-b2353b081235" name="Changes" comment="fix window sizing">
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.lab_1.dir/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.lab_1.dir/.idea/codeStyles/codeStyleConfig.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.lab_1.dir/.idea/encodings.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.lab_1.dir/.idea/indexLayout.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.lab_1.dir/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.lab_1.dir/.idea/vcs.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/codeStyles/codeStyleConfig.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/compilerexplorer.settings.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build.rs" beforeDir="false" afterPath="$PROJECT_DIR$/static_lab_3/build.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/resources/background.bmp" beforeDir="false" afterPath="$PROJECT_DIR$/static_lab_3/resources/background.bmp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/resources/hero-mask.bmp" beforeDir="false" afterPath="$PROJECT_DIR$/static_lab_3/resources/hero-mask.bmp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/resources/hero.bmp" beforeDir="false" afterPath="$PROJECT_DIR$/static_lab_3/resources/hero.bmp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/resources/red-background.bmp" beforeDir="false" afterPath="$PROJECT_DIR$/static_lab_3/resources/red-background.bmp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/resources/resources.rc" beforeDir="false" afterPath="$PROJECT_DIR$/static_lab_3/resources/resources.rc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/resources/rust-icon.ico" beforeDir="false" afterPath="$PROJECT_DIR$/static_lab_3/resources/rust-icon.ico" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rust-toolchain.toml" beforeDir="false" afterPath="$PROJECT_DIR$/rust-toolchain.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/background.rs" beforeDir="false" afterPath="$PROJECT_DIR$/static_lab_3/src/background.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/hero.rs" beforeDir="false" afterPath="$PROJECT_DIR$/static_lab_3/src/hero.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/static_lab_3/src/main.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/resources.rs" beforeDir="false" afterPath="$PROJECT_DIR$/static_lab_3/src/resources.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/table.rs" beforeDir="false" afterPath="$PROJECT_DIR$/static_lab_3/src/table.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/utils.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static_lab_3/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/static_lab_3/src/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/string_replace/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/string_replace/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/string_replace/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/string_replace/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/utils/src/lib.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -142,7 +120,7 @@
     &quot;last_opened_file_path&quot;: &quot;/home/Paval/Backup/linux/lab_1&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
     &quot;org.rust.cargo.project.model.PROJECT_DISCOVERY&quot;: &quot;true&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;configurable.group.build&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;database.data.views&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
@@ -174,6 +152,23 @@
   <component name="RunManager" selected="Cargo.run static linking">
     <configuration name="Run static_lab-3" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
       <option name="command" value="run --package static_lab-3 --bin static_lab-3" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <option name="emulateTerminal" value="true" />
+      <option name="channel" value="DEFAULT" />
+      <option name="requiredFeatures" value="true" />
+      <option name="allFeatures" value="false" />
+      <option name="withSudo" value="false" />
+      <option name="buildTarget" value="REMOTE" />
+      <option name="backtrace" value="SHORT" />
+      <envs />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Test tests::find_string_in_range_test" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="command" value="test --package string_replace --lib tests::find_string_in_range_test -- --exact" />
       <option name="workingDirectory" value="file://$PROJECT_DIR$" />
       <option name="emulateTerminal" value="true" />
       <option name="channel" value="DEFAULT" />
@@ -301,6 +296,7 @@
       <item itemvalue="Cargo.build utils" />
       <item itemvalue="Cargo.build workspace" />
       <item itemvalue="Cargo.build dll" />
+      <item itemvalue="Cargo.Test tests::find_string_in_range_test" />
       <item itemvalue="Cargo.Run static_lab-3" />
       <item itemvalue="Cargo.run static linking" />
       <item itemvalue="Cargo.check" />
@@ -310,6 +306,7 @@
     <recent_temporary>
       <list>
         <item itemvalue="Cargo.run static linking" />
+        <item itemvalue="Cargo.Test tests::find_string_in_range_test" />
         <item itemvalue="Cargo.Run static_lab-3" />
         <item itemvalue="Cargo.rustc" />
         <item itemvalue="Cargo.check" />
@@ -371,7 +368,8 @@
       <workItem from="1695212637411" duration="2794000" />
       <workItem from="1695215479865" duration="948000" />
       <workItem from="1695216453745" duration="2551000" />
-      <workItem from="1695645585769" duration="7615000" />
+      <workItem from="1695645585769" duration="7867000" />
+      <workItem from="1695657449034" duration="5243000" />
     </task>
     <task id="LOCAL-00001" summary="add action logic">
       <created>1694387365699</created>
