@@ -8,9 +8,9 @@ edition = "2021"
 winapi = { version = "0.3.9", features = ["wingdi", "winuser", "libloaderapi", "combaseapi", "objbase", "shobjidl", "winerror", "mmeapi", "mmsystem", "windef", "processthreadsapi"] }
 winapi-util = "0.1.5"
 num_enum = "0.7.0"
-utils = {path = "../utils"}
+utils = { path = "../utils" }
 alloca = "0.4.0"
-string_replace = {path = "../string_replace"}
+string_replace = { path = "../string_replace" }
 [target.'cfg(target_os = "windows")'.features]
 default = ["windows"]
 [build-dependencies]

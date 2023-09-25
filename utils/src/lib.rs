@@ -91,6 +91,13 @@ pub fn show_alert_message(title: &str, description: &str) {
     }
 }
 
+
+pub fn show_error_message_with_error_code(message: &str, error_code: INT) {
+    let mut description = message.to_owned();
+    description.push_str(error_code.to_string().as_str());
+    show_error_message(description.as_str());
+}
+
 pub struct BackBuffer {
     hdc: HDC,
     hBitmap: HBITMAP,

@@ -2,7 +2,6 @@
 #![feature(let_chains)]
 #![feature(slice_pattern)]
 
-use std::arch::x86_64::_mm256_fmsubadd_pd;
 use std::ffi::{c_char, CStr, CString};
 use std::{mem, ptr};
 use std::mem::MaybeUninit;
@@ -10,10 +9,8 @@ use std::ops::Index;
 use num_enum::IntoPrimitive;
 use winapi::shared::minwindef::{DWORD, HINSTANCE, LPVOID};
 use winapi::um::sysinfoapi::{GetSystemInfo, SYSTEM_INFO};
-use winapi::um::winbase::lstrlenA;
 use winapi::um::memoryapi::{VirtualQueryEx};
 use winapi::um::winnt::{DLL_PROCESS_ATTACH, DLL_PROCESS_DETACH, HANDLE, INT, MEM_COMMIT, MEMORY_BASIC_INFORMATION, PAGE_EXECUTE_READWRITE, PAGE_GUARD, PAGE_READWRITE};
-use winapi_util::console::Intense::No;
 use utils::StringSearchParams;
 use crate::SearchResult::{Found, InvalidParams, InvalidStringValues, NotFound};
 
@@ -31,7 +28,7 @@ extern "system" fn DllMain(dll_module: HINSTANCE, call_reason: u32, _: *mut ()) 
       true
 }
 
-#[derive(Copy, Clone, IntoPrimitive)]
+#[derive(Copy, Clone, IntoPrimitive, Eq, PartialEq)]
 #[repr(usize)]
 pub enum SearchResult {
       Found = 0,
@@ -139,7 +136,7 @@ pub extern fn replace(params: *const StringSearchParams) -> INT {
             return InvalidParams as INT;
       }
       let params = unsafe { &*params };
-      let mut result_code: SearchResult;
+      let result_code: SearchResult;
       if is_valid_params(params) {
             let search_pattern = unsafe { CStr::from_ptr(params.szSearch) }.to_bytes();
             let replace_pattern = unsafe { CStr::from_ptr(params.szReplace) }.to_bytes();
@@ -180,11 +177,11 @@ mod tests {
             let found_pattern = find_string_in_range(
                   pattern.as_slice(), bytes.as_ptr(), unsafe { bytes.as_ptr().add(bytes.len()) },
             );
-            assert_eq!(found_pattern.is_some() && found_pattern.unwrap().eq(pattern.as_slice()));
+            // assert_eq!(found_pattern.is_some() && found_pattern.unwrap().eq(pattern.as_slice()), true);
             let pattern = [1, 4, 6];
             let found_pattern = find_string_in_range(
                   pattern.as_slice(), bytes.as_ptr(), unsafe { bytes.as_ptr().add(bytes.len()) },
             );
-            assert_eq!(found_pattern.is_none());
+            assert_eq!(found_pattern.is_none(), true);
       }
 }

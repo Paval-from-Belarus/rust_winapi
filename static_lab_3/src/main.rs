@@ -7,29 +7,10 @@ extern crate core;
 extern crate utils;
 
 
-use std::mem::MaybeUninit;
-
 use winapi::shared::minwindef::*;
-use winapi::shared::windef::*;
-use winapi::um::libloaderapi::{GetModuleFileNameW, GetModuleHandleW};
-use winapi::um::winuser::*;
-use std::{cmp, isize, mem, ptr};
-use std::borrow::Cow;
-use std::cell::OnceCell;
-use std::convert::Into;
-use std::ffi::{c_char, c_int, CString};
-use std::ops::AddAssign;
-use std::os::windows::raw::HANDLE;
-use num_enum::{IntoPrimitive, TryFromPrimitive};
-use winapi::ctypes::__uint8;
-use winapi::shared::winerror::TRUST_E_ACTION_UNKNOWN;
-use winapi::um::errhandlingapi::GetLastError;
-use winapi::um::processthreadsapi::{GetCurrentProcess, GetStartupInfoW};
-use winapi::um::winbase::{COPYFILE2_MESSAGE_Error, STARTUPINFOEXW};
-use winapi::um::wingdi::{BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, DeleteDC, DeleteObject, GetTextMetricsW, MAKEPOINTS, MAKEROP4, PATCOPY, PATINVERT, PS_SOLID, Rectangle, RestoreDC, RGB, SaveDC, SelectObject, SRCCOPY, TEXTMETRICW};
-use winapi::um::winnt::{LONG, LPCWSTR, LPSTR, SCRUB_DATA_INPUT};
-use winapi_util::console::Color;
-use utils::{BackBuffer, FormParams, WindowsString, GET_X_LPARAM, GET_Y_LPARAM, StringSearchParams};
+use std::{ptr};
+use winapi::um::processthreadsapi::{GetCurrentProcess};
+use utils::{StringSearchParams};
 
 #[link(name = "string_replace.dll", kind = "dylib")]
 extern {
@@ -47,11 +28,6 @@ fn replace_string(params: &StringSearchParams) -> Result<(), INT> {
       }
 }
 
-fn show_error_message_with_error_code(message: &str, error_code: INT) {
-      let mut description = message.to_owned();
-      description.push_str(error_code.to_string().as_str());
-      utils::show_error_message(description.as_str());
-}
 
 pub fn run() {
       let handle = unsafe {
@@ -72,7 +48,7 @@ pub fn run() {
       params.szSearch = static_string.as_ptr() as _;
       params.cbSearchLen = static_string.len();
       if let Err(error_code) = replace_string(&params) {
-            show_error_message_with_error_code("Static replacement failed with error code ", error_code);
+            utils::show_error_message_with_error_code("Static replacement failed with error code ", error_code);
       } else {
             utils::show_alert_message("Finished successfully. Result string: ", String::from_utf8(static_string.to_vec()).unwrap().as_str());
       }
@@ -83,7 +59,7 @@ pub fn run() {
       params.cbSearchLen = heap_string.len();
       utils::show_alert_message("Heap replacement. Origin string: ", String::from_utf8(heap_string.clone()).unwrap().as_str());
       if let Err(error_code) = replace_string(&params) {
-            show_error_message_with_error_code("Heap replacement failed with error code ", error_code);
+            utils::show_error_message_with_error_code("Heap replacement failed with error code ", error_code);
       } else {
             utils::show_alert_message("Finished successfully. Result string: ", String::from_utf8(heap_string.clone()).unwrap().as_str());
       }
@@ -92,7 +68,7 @@ pub fn run() {
       params.szSearch = stack_string.as_ptr() as _;
       params.cbSearchLen = stack_string.len();
       if let Err(error_code) = replace_string(&params) {
-            show_error_message_with_error_code("Stack replacement failed with error code ", error_code);
+            utils::show_error_message_with_error_code("Stack replacement failed with error code ", error_code);
       } else {
             utils::show_alert_message("Finished successfully. Result string: ", String::from_utf8(heap_string.clone()).unwrap().as_str());
       }

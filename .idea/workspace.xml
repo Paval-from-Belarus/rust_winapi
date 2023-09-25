@@ -20,12 +20,13 @@
   <component name="ChangeListManager">
     <list default="true" id="8d768986-cfc2-48b0-ac07-b2353b081235" name="Changes" comment="fix window sizing">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static_lab_3/src/background.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static_lab_3/src/hero.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dynamic_lab_3/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/dynamic_lab_3/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dynamic_lab_3/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/dynamic_lab_3/src/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static_lab_3/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/static_lab_3/Cargo.toml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/static_lab_3/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/static_lab_3/src/main.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static_lab_3/src/resources.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static_lab_3/src/table.rs" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/string_replace/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/string_replace/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/utils/src/lib.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -151,7 +152,24 @@
       <command value="cargo check --target x86_64-pc-windows-gnu" />
     </option>
   </component>
-  <component name="RunManager" selected="Cargo.run static linking">
+  <component name="RunManager" selected="Cargo.Run dynamic_lab_3">
+    <configuration name="Run dynamic_lab_3" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="command" value="run --package dynamic_lab_3 --bin dynamic_lab_3" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <option name="emulateTerminal" value="true" />
+      <option name="channel" value="DEFAULT" />
+      <option name="requiredFeatures" value="true" />
+      <option name="allFeatures" value="false" />
+      <option name="withSudo" value="false" />
+      <option name="buildTarget" value="REMOTE" />
+      <option name="backtrace" value="SHORT" />
+      <envs />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="Run static_lab-3" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
       <option name="command" value="run --package static_lab-3 --bin static_lab-3" />
       <option name="workingDirectory" value="file://$PROJECT_DIR$" />
@@ -237,23 +255,6 @@
         <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
       </method>
     </configuration>
-    <configuration name="check" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
-      <option name="command" value="check --target x86_64-pc-windows-gnu" />
-      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
-      <option name="emulateTerminal" value="true" />
-      <option name="channel" value="DEFAULT" />
-      <option name="requiredFeatures" value="true" />
-      <option name="allFeatures" value="false" />
-      <option name="withSudo" value="false" />
-      <option name="buildTarget" value="REMOTE" />
-      <option name="backtrace" value="SHORT" />
-      <envs />
-      <option name="isRedirectInput" value="false" />
-      <option name="redirectInputPath" value="" />
-      <method v="2">
-        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="run static linking" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
       <option name="command" value="run --package static_lab-3 --bin static_lab-3" />
       <option name="workingDirectory" value="file://$PROJECT_DIR$" />
@@ -298,20 +299,20 @@
       <item itemvalue="Cargo.build utils" />
       <item itemvalue="Cargo.build workspace" />
       <item itemvalue="Cargo.build dll" />
+      <item itemvalue="Cargo.Run dynamic_lab_3" />
       <item itemvalue="Cargo.Test tests::find_string_in_range_test" />
       <item itemvalue="Cargo.Run static_lab-3" />
       <item itemvalue="Cargo.run static linking" />
-      <item itemvalue="Cargo.check" />
       <item itemvalue="Cargo.rustc" />
       <item itemvalue="Makefile Target.Unnamed" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Cargo.Run dynamic_lab_3" />
         <item itemvalue="Cargo.run static linking" />
         <item itemvalue="Cargo.Test tests::find_string_in_range_test" />
         <item itemvalue="Cargo.Run static_lab-3" />
         <item itemvalue="Cargo.rustc" />
-        <item itemvalue="Cargo.check" />
       </list>
     </recent_temporary>
   </component>
@@ -372,7 +373,7 @@
       <workItem from="1695216453745" duration="2551000" />
       <workItem from="1695645585769" duration="7867000" />
       <workItem from="1695657449034" duration="5243000" />
-      <workItem from="1695666249344" duration="2893000" />
+      <workItem from="1695666249344" duration="7497000" />
     </task>
     <task id="LOCAL-00001" summary="add action logic">
       <created>1694387365699</created>
@@ -452,18 +453,23 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/static_lab_3/src/main.rs</url>
-          <line>37</line>
+          <line>18</line>
           <option name="timeStamp" value="192" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/static_lab_3/src/main.rs</url>
-          <line>73</line>
+          <line>49</line>
           <option name="timeStamp" value="201" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/string_replace/src/lib.rs</url>
-          <line>88</line>
-          <option name="timeStamp" value="210" />
+          <line>144</line>
+          <option name="timeStamp" value="214" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/dynamic_lab_3/src/main.rs</url>
+          <line>100</line>
+          <option name="timeStamp" value="215" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
