@@ -23,7 +23,9 @@
       <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/dynamic_lab_3/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/dynamic_lab_3/src/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/injector/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/injector/src/main.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/static_lab_3/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/static_lab_3/src/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/string_replace/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/string_replace/src/lib.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/utils/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/utils/src/lib.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -109,21 +111,21 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.cidr.known.project.marker": "true",
-    "WebServerToolWindowFactoryState": "false",
-    "cf.first.check.clang-format": "false",
-    "cidr.known.project.marker": "true",
-    "git-widget-placeholder": "lab-3",
-    "last_opened_file_path": "/home/Paval/Backup/linux/lab_1",
-    "nodejs_package_manager_path": "npm",
-    "org.rust.cargo.project.model.PROJECT_DISCOVERY": "true",
-    "settings.editor.selected.configurable": "preferences.sourceCode.Rust",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
+    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;lab-3&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/Paval/Backup/linux/lab_1&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;org.rust.cargo.project.model.PROJECT_DISCOVERY&quot;: &quot;true&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;compilerexplorer&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="E:\linux\lab_1\resources" />
@@ -149,7 +151,7 @@
       <command value="cargo check --target x86_64-pc-windows-gnu" />
     </option>
   </component>
-  <component name="RunManager" selected="Cargo.Run injector">
+  <component name="RunManager" selected="Cargo.Run victim">
     <configuration name="Run dynamic_lab_3" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
       <option name="command" value="run --package dynamic_lab_3 --bin dynamic_lab_3" />
       <option name="workingDirectory" value="file://$PROJECT_DIR$" />
@@ -184,8 +186,8 @@
         <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
       </method>
     </configuration>
-    <configuration name="Run static_lab-3" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
-      <option name="command" value="run --package static_lab-3 --bin static_lab-3" />
+    <configuration name="Run victim" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="command" value="run --package victim --bin victim" />
       <option name="workingDirectory" value="file://$PROJECT_DIR$" />
       <option name="emulateTerminal" value="true" />
       <option name="channel" value="DEFAULT" />
@@ -296,20 +298,20 @@
       <item itemvalue="Cargo.build utils" />
       <item itemvalue="Cargo.build workspace" />
       <item itemvalue="Cargo.build dll" />
+      <item itemvalue="Cargo.Run victim" />
       <item itemvalue="Cargo.Run dynamic_lab_3" />
       <item itemvalue="Cargo.Run injector" />
       <item itemvalue="Cargo.Test tests::find_string_in_range_test" />
-      <item itemvalue="Cargo.Run static_lab-3" />
       <item itemvalue="Cargo.run static linking" />
       <item itemvalue="Makefile Target.Unnamed" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Cargo.Run victim" />
         <item itemvalue="Cargo.Run injector" />
-        <item itemvalue="Cargo.run static linking" />
         <item itemvalue="Cargo.Run dynamic_lab_3" />
+        <item itemvalue="Cargo.run static linking" />
         <item itemvalue="Cargo.Test tests::find_string_in_range_test" />
-        <item itemvalue="Cargo.Run static_lab-3" />
       </list>
     </recent_temporary>
   </component>
@@ -370,7 +372,11 @@
       <workItem from="1695216453745" duration="2551000" />
       <workItem from="1695645585769" duration="7867000" />
       <workItem from="1695657449034" duration="5243000" />
-      <workItem from="1695666249344" duration="18823000" />
+      <workItem from="1695666249344" duration="19187000" />
+      <workItem from="1695820011515" duration="4097000" />
+      <workItem from="1696230776338" duration="20000" />
+      <workItem from="1696260178616" duration="10308000" />
+      <workItem from="1696270683015" duration="7912000" />
     </task>
     <task id="LOCAL-00001" summary="add action logic">
       <created>1694387365699</created>
@@ -450,31 +456,66 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/static_lab_3/src/main.rs</url>
-          <line>18</line>
-          <option name="timeStamp" value="192" />
+          <line>44</line>
+          <option name="timeStamp" value="225" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/static_lab_3/src/main.rs</url>
-          <line>49</line>
-          <option name="timeStamp" value="221" />
+          <url>file://$PROJECT_DIR$/string_replace/src/lib.rs</url>
+          <line>197</line>
+          <option name="timeStamp" value="231" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/dynamic_lab_3/src/main.rs</url>
+          <line>86</line>
+          <option name="timeStamp" value="233" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/injector/src/main.rs</url>
-          <line>75</line>
-          <option name="timeStamp" value="222" />
+          <line>128</line>
+          <option name="timeStamp" value="234" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/dynamic_lab_3/src/main.rs</url>
+          <line>19</line>
+          <option name="timeStamp" value="235" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/injector/src/main.rs</url>
+          <line>117</line>
+          <option name="timeStamp" value="237" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/victim/src/main.rs</url>
+          <line>8</line>
+          <option name="timeStamp" value="238" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/string_replace/src/lib.rs</url>
+          <line>208</line>
+          <option name="timeStamp" value="241" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/injector/src/main.rs</url>
           <line>70</line>
-          <option name="timeStamp" value="223" />
+          <option name="timeStamp" value="247" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/string_replace/src/lib.rs</url>
+          <line>186</line>
+          <option name="timeStamp" value="248" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/string_replace/src/lib.rs</url>
+          <line>168</line>
+          <option name="timeStamp" value="249" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/string_replace/src/lib.rs</url>
+          <line>178</line>
+          <option name="timeStamp" value="253" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
-    <watches-manager>
-      <configuration name="CargoCommandRunConfiguration">
-        <watch expression="window.back_buffer.variant1.NAME" />
-      </configuration>
-    </watches-manager>
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

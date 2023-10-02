@@ -25,11 +25,10 @@ pub struct FormParams {
 #[repr(C)]
 #[allow(non_snake_case)]
 pub struct StringSearchParams {
-    pub szSearch: *const c_char,
+    pub szSearch: *mut c_char,
     pub cbSearchLen: usize,
     pub szReplace: *const c_char,
-    pub cbReplaceLen: usize,
-    pub hProcess: HANDLE
+    pub cbReplaceLen: usize
 }
 pub struct Vector2 {
     pub x: f32,
