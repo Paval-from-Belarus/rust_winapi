@@ -166,7 +166,7 @@ pub extern fn replace(params: *const StringSearchParams) -> INT {
         return InvalidParams as INT;
     }
     // utils::show_error_message("start");
-    let params = unsafe { &*params };
+     let params = unsafe { &*params };
     let mut result_code: SearchCode = NotFound;
     let search_pattern = unsafe { slice::from_raw_parts(params.szSearch as *const u8, params.cbSearchLen) };
     let replace_pattern = unsafe { slice::from_raw_parts(params.szReplace as *const u8, params.cbReplaceLen) };

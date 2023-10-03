@@ -75,7 +75,7 @@ fn copy_to_process(process_handle: HANDLE, params: &StringSearchParams) -> Resul
     if offset.is_null() {
         return Err("Failed to allocate memory in foreign process");
     }
-    let other_params_ptr = align_pointer(offset);
+    let other_params_ptr = offset;
     let search_pattern = unsafe {
         align_pointer(other_params_ptr.add(mem::size_of::<StringSearchParams>()))
     };
@@ -91,17 +91,20 @@ fn copy_to_process(process_handle: HANDLE, params: &StringSearchParams) -> Resul
         szReplace: replace_pattern as _,
         cbReplaceLen: params.cbReplaceLen,
     };
+    let other_params_ptr = unsafe {
+        other_params_ptr.offset(-(mem::size_of::<StringSearchParams>() as isize + 8))
+    };
     unsafe {
         let mut cb_written = 0;
+        let source_params_ptr = (&other_params as *const StringSearchParams) as LPVOID;
+        let copy_result = WriteProcessMemory(process_handle, other_params_ptr,
+                                             source_params_ptr, mem::size_of::<StringSearchParams>(), &mut cb_written);
+        debug_assert!(copy_result == TRUE);
         let copy_result = WriteProcessMemory(process_handle, search_pattern,
                                              params.szSearch as _, params.cbSearchLen, &mut cb_written);
         debug_assert!(copy_result == TRUE);
         let copy_result = WriteProcessMemory(process_handle, replace_pattern,
                                              params.szReplace as _, params.cbReplaceLen, &mut cb_written);
-        debug_assert!(copy_result == TRUE);
-        let source_params_ptr = (&other_params as *const StringSearchParams) as LPVOID;
-        let copy_result = WriteProcessMemory(process_handle, other_params_ptr,
-                                             source_params_ptr, mem::size_of::<StringSearchParams>(), ptr::null_mut());
         debug_assert!(copy_result == TRUE);
     };
     Ok(other_params_ptr)
@@ -114,8 +117,8 @@ fn invoke_function(pid: DWORD, dll_name: &str, function_name: &str, params: &Str
         println!("Failed to open process");
         return;
     }
+    let dll_handle = utils::load_library(dll_name);
     let function_handler = unsafe {
-        let dll_handle = utils::load_library(dll_name);
         // let dll_handle = 0x7fff09be0000 as HMODULE;
         // let dll_handle = GetModuleHandleA(dll_name.as_ptr() as _);
         let offset = GetProcAddress(dll_handle, function_name.as_ptr() as _);
@@ -142,6 +145,7 @@ fn invoke_function(pid: DWORD, dll_name: &str, function_name: &str, params: &Str
         return;
     }
     unsafe { CloseHandle(process_handle); }
+    utils::free_library(dll_handle)
 }
 
 fn inject_dll(pid: DWORD, dll_name: &[u16]) -> Result<(), ()> {
