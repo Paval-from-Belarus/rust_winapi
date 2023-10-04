@@ -23,12 +23,11 @@ pub struct FormParams {
     pub startup_info: STARTUPINFOW,
 }
 #[repr(C)]
-#[allow(non_snake_case)]
 pub struct StringSearchParams {
-    pub szSearch: *mut c_char,
-    pub cbSearchLen: usize,
-    pub szReplace: *const c_char,
-    pub cbReplaceLen: usize
+    pub sz_search: *mut c_char,
+    pub cb_search_len: usize,
+    pub sz_replace: *const c_char,
+    pub cb_replace_len: usize
 }
 pub struct Vector2 {
     pub x: f32,

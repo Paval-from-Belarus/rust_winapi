@@ -18,11 +18,13 @@
     <cargoProject FILE="$PROJECT_DIR$/static_string_replace/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8d768986-cfc2-48b0-ac07-b2353b081235" name="Changes" comment="add remote thread">
+    <list default="true" id="8d768986-cfc2-48b0-ac07-b2353b081235" name="Changes" comment="crack window dll loading">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dynamic_lab_3/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/dynamic_lab_3/src/main.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/injector/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/injector/src/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static_lab_3/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/static_lab_3/src/main.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/string_replace/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/string_replace/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/victim/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/victim/src/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/utils/src/lib.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -147,7 +149,7 @@
       <command value="cargo check --target x86_64-pc-windows-gnu" />
     </option>
   </component>
-  <component name="RunManager" selected="Cargo.Run victim">
+  <component name="RunManager" selected="Cargo.Run injector">
     <configuration name="Run dynamic_lab_3" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
       <option name="command" value="run --package dynamic_lab_3 --bin dynamic_lab_3" />
       <option name="workingDirectory" value="file://$PROJECT_DIR$" />
@@ -303,10 +305,10 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Cargo.Run victim" />
         <item itemvalue="Cargo.Run injector" />
-        <item itemvalue="Cargo.Run dynamic_lab_3" />
+        <item itemvalue="Cargo.Run victim" />
         <item itemvalue="Cargo.run static linking" />
+        <item itemvalue="Cargo.Run dynamic_lab_3" />
         <item itemvalue="Cargo.Test tests::find_string_in_range_test" />
       </list>
     </recent_temporary>
@@ -375,7 +377,9 @@
       <workItem from="1696270683015" duration="8125000" />
       <workItem from="1696282451183" duration="1993000" />
       <workItem from="1696323756321" duration="5175000" />
-      <workItem from="1696335248627" duration="144000" />
+      <workItem from="1696335248627" duration="217000" />
+      <workItem from="1696422404398" duration="3435000" />
+      <workItem from="1696435970703" duration="464000" />
     </task>
     <task id="LOCAL-00001" summary="add action logic">
       <created>1694387365699</created>
@@ -426,7 +430,14 @@
       <option name="project" value="LOCAL" />
       <updated>1696278928476</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="crack window dll loading">
+      <created>1696335422286</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1696335422286</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -451,7 +462,8 @@
     <MESSAGE value="some release changes" />
     <MESSAGE value="fix window sizing" />
     <MESSAGE value="add remote thread" />
-    <option name="LAST_COMMIT_MESSAGE" value="add remote thread" />
+    <MESSAGE value="crack window dll loading" />
+    <option name="LAST_COMMIT_MESSAGE" value="crack window dll loading" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

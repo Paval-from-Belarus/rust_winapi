@@ -67,7 +67,7 @@ fn align_pointer(pointer: LPVOID) -> LPVOID {
 
 fn copy_to_process(process_handle: HANDLE, params: &StringSearchParams) -> Result<LPVOID, &str> {
     let align_offset = mem::size_of::<usize>();
-    let params_size = mem::size_of::<StringSearchParams>() + params.cbSearchLen + params.cbReplaceLen;
+    let params_size = mem::size_of::<StringSearchParams>() + params.cb_search_len + params.cb_replace_len;
     let offset = unsafe {
         VirtualAllocEx(process_handle, ptr::null_mut(), params_size + 3 * align_offset,
                        MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE)
@@ -80,19 +80,13 @@ fn copy_to_process(process_handle: HANDLE, params: &StringSearchParams) -> Resul
         align_pointer(other_params_ptr.add(mem::size_of::<StringSearchParams>()))
     };
     let replace_pattern = unsafe {
-        align_pointer(search_pattern.add(params.cbSearchLen))
-    };
-    let other_params_ptr = unsafe {
-        align_pointer(search_pattern.add(params.cbReplaceLen))
+        align_pointer(search_pattern.add(params.cb_search_len))
     };
     let other_params = StringSearchParams {
-        szSearch: search_pattern as _,
-        cbSearchLen: params.cbSearchLen,
-        szReplace: replace_pattern as _,
-        cbReplaceLen: params.cbReplaceLen,
-    };
-    let other_params_ptr = unsafe {
-        other_params_ptr.offset(-(mem::size_of::<StringSearchParams>() as isize + 8))
+        sz_search: search_pattern as _,
+        cb_search_len: params.cb_search_len,
+        sz_replace: replace_pattern as _,
+        cb_replace_len: params.cb_replace_len,
     };
     unsafe {
         let mut cb_written = 0;
@@ -101,10 +95,10 @@ fn copy_to_process(process_handle: HANDLE, params: &StringSearchParams) -> Resul
                                              source_params_ptr, mem::size_of::<StringSearchParams>(), &mut cb_written);
         debug_assert!(copy_result == TRUE);
         let copy_result = WriteProcessMemory(process_handle, search_pattern,
-                                             params.szSearch as _, params.cbSearchLen, &mut cb_written);
+                                             params.sz_search as _, params.cb_search_len, &mut cb_written);
         debug_assert!(copy_result == TRUE);
         let copy_result = WriteProcessMemory(process_handle, replace_pattern,
-                                             params.szReplace as _, params.cbReplaceLen, &mut cb_written);
+                                             params.sz_replace as _, params.cb_replace_len, &mut cb_written);
         debug_assert!(copy_result == TRUE);
     };
     Ok(other_params_ptr)
@@ -209,10 +203,10 @@ fn main() {
             }
             println!("Injected successfully!");
             let params = StringSearchParams {
-                szSearch: SEARCH_PATTERN.as_ptr() as _,
-                cbSearchLen: SEARCH_PATTERN.len(),
-                szReplace: REPLACE_PATTERN.as_ptr() as _,
-                cbReplaceLen: REPLACE_PATTERN.len(),
+                sz_search: SEARCH_PATTERN.as_ptr() as _,
+                cb_search_len: SEARCH_PATTERN.len(),
+                sz_replace: REPLACE_PATTERN.as_ptr() as _,
+                cb_replace_len: REPLACE_PATTERN.len(),
             };
             invoke_function(pid, DLL_NAME, FUNCTION_NAME, &params);
         } else {

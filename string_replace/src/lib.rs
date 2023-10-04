@@ -142,8 +142,8 @@ const MAX_STRING_SIZE: usize = 255;
 
 fn is_valid_params(params: &StringSearchParams) -> bool {
     let is_valid;
-    if !params.szReplace.is_null() && !params.szSearch.is_null() {
-        is_valid = params.cbReplaceLen <= MAX_STRING_SIZE && params.cbSearchLen <= MAX_STRING_SIZE;
+    if !params.sz_replace.is_null() && !params.sz_search.is_null() {
+        is_valid = params.cb_replace_len <= MAX_STRING_SIZE && params.cb_search_len <= MAX_STRING_SIZE;
     } else {
         is_valid = false;
     }
@@ -168,8 +168,8 @@ pub extern fn replace(params: *const StringSearchParams) -> INT {
     // utils::show_error_message("start");
      let params = unsafe { &*params };
     let mut result_code: SearchCode = NotFound;
-    let search_pattern = unsafe { slice::from_raw_parts(params.szSearch as *const u8, params.cbSearchLen) };
-    let replace_pattern = unsafe { slice::from_raw_parts(params.szReplace as *const u8, params.cbReplaceLen) };
+    let search_pattern = unsafe { slice::from_raw_parts(params.sz_search as *const u8, params.cb_search_len) };
+    let replace_pattern = unsafe { slice::from_raw_parts(params.sz_replace as *const u8, params.cb_replace_len) };
     // let search_pattern = unsafe { CStr::from_ptr(params.szSearch) }.to_bytes();
     // let replace_pattern = unsafe { CStr::from_ptr(params.szReplace) }.to_bytes();
     let process_handle = unsafe { GetCurrentProcess() };
