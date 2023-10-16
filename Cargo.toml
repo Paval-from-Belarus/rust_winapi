@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "string_replace", "static_lab_3", "dynamic_lab_3", "utils", "injector", "victim"
+    "utils", "thread_pool"
 ]
 #[package]
 #name = "lab_1"

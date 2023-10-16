@@ -50,6 +50,33 @@ macro_rules! GET_Y_LPARAM {
         (($lp >> 16) & 0xffff) as LONG
     };
 }
+#[macro_export]
+macro_rules! bitflags {
+    ($vis:vis $s:ident($t:ty), $($name:ident = $value:expr),*) => {
+        #[derive(Clone, Copy, Debug)]
+        $vis struct $s($t);
+
+        impl From<$t> for $s {
+            fn from(item: $t) -> Self {
+                $s(item)
+            }
+        }
+
+        impl Into<$t> for $s {
+            fn into(self) -> $t {
+                self.0
+            }
+        }
+        impl $s {
+         $(
+            $vis const $name: $t = $value;
+        )*
+            pub fn contains(&self, bit: $t) -> bool {
+             self.0 & bit == bit
+         }
+        }
+    };
+}
 impl Vector2 {
     pub const ZERO: Vector2 = Vector2 { x: 0.0, y: 0.0 };
     pub const UP: Vector2 = Vector2 { x: 0.0, y: -1.0 };

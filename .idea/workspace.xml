@@ -18,13 +18,15 @@
     <cargoProject FILE="$PROJECT_DIR$/static_string_replace/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8d768986-cfc2-48b0-ac07-b2353b081235" name="Changes" comment="crack window dll loading">
+    <list default="true" id="8d768986-cfc2-48b0-ac07-b2353b081235" name="Changes" comment="rename search params struct">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dynamic_lab_3/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/dynamic_lab_3/src/main.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/injector/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/injector/src/main.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static_lab_3/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/static_lab_3/src/main.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/string_replace/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/string_replace/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dynamic_lab_3/Cargo.toml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/dynamic_lab_3/src/main.rs" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/utils/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/utils/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/victim/Cargo.toml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/victim/src/main.rs" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -116,11 +118,11 @@
     &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
     &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
     &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;lab-3&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;lab-4&quot;,
     &quot;last_opened_file_path&quot;: &quot;/home/Paval/Backup/linux/lab_1&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
     &quot;org.rust.cargo.project.model.PROJECT_DISCOVERY&quot;: &quot;true&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;compilerexplorer&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;configurable.group.editor&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
@@ -149,7 +151,7 @@
       <command value="cargo check --target x86_64-pc-windows-gnu" />
     </option>
   </component>
-  <component name="RunManager" selected="Cargo.Run injector">
+  <component name="RunManager" selected="Cargo.Test tests::it_works">
     <configuration name="Run dynamic_lab_3" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
       <option name="command" value="run --package dynamic_lab_3 --bin dynamic_lab_3" />
       <option name="workingDirectory" value="file://$PROJECT_DIR$" />
@@ -201,8 +203,8 @@
         <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
       </method>
     </configuration>
-    <configuration name="Test tests::find_string_in_range_test" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
-      <option name="command" value="test --package string_replace --lib tests::find_string_in_range_test -- --exact" />
+    <configuration name="Test tests::it_works" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="command" value="test --package thread_pool --lib tests::it_works -- --exact" />
       <option name="workingDirectory" value="file://$PROJECT_DIR$" />
       <option name="emulateTerminal" value="true" />
       <option name="channel" value="DEFAULT" />
@@ -296,20 +298,20 @@
       <item itemvalue="Cargo.build utils" />
       <item itemvalue="Cargo.build workspace" />
       <item itemvalue="Cargo.build dll" />
+      <item itemvalue="Cargo.Test tests::it_works" />
       <item itemvalue="Cargo.Run victim" />
       <item itemvalue="Cargo.Run dynamic_lab_3" />
       <item itemvalue="Cargo.Run injector" />
-      <item itemvalue="Cargo.Test tests::find_string_in_range_test" />
       <item itemvalue="Cargo.run static linking" />
       <item itemvalue="Makefile Target.Unnamed" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Cargo.Test tests::it_works" />
         <item itemvalue="Cargo.Run injector" />
         <item itemvalue="Cargo.Run victim" />
         <item itemvalue="Cargo.run static linking" />
         <item itemvalue="Cargo.Run dynamic_lab_3" />
-        <item itemvalue="Cargo.Test tests::find_string_in_range_test" />
       </list>
     </recent_temporary>
   </component>
@@ -380,6 +382,8 @@
       <workItem from="1696335248627" duration="217000" />
       <workItem from="1696422404398" duration="3435000" />
       <workItem from="1696435970703" duration="464000" />
+      <workItem from="1696436764842" duration="477000" />
+      <workItem from="1697461949402" duration="15675000" />
     </task>
     <task id="LOCAL-00001" summary="add action logic">
       <created>1694387365699</created>
@@ -437,7 +441,14 @@
       <option name="project" value="LOCAL" />
       <updated>1696335422286</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="rename search params struct">
+      <created>1696437174409</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1696437174409</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -463,90 +474,16 @@
     <MESSAGE value="fix window sizing" />
     <MESSAGE value="add remote thread" />
     <MESSAGE value="crack window dll loading" />
-    <option name="LAST_COMMIT_MESSAGE" value="crack window dll loading" />
+    <MESSAGE value="rename search params struct" />
+    <option name="LAST_COMMIT_MESSAGE" value="rename search params struct" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$USER_HOME$/.rustup/toolchains/nightly-x86_64-pc-windows-msvc/lib/rustlib/src/rust/library/core/src/mem/maybe_uninit.rs</url>
-          <line>488</line>
-          <option name="timeStamp" value="104" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/static_lab_3/src/main.rs</url>
-          <line>44</line>
-          <option name="timeStamp" value="225" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/string_replace/src/lib.rs</url>
-          <line>197</line>
-          <option name="timeStamp" value="231" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/dynamic_lab_3/src/main.rs</url>
-          <line>86</line>
-          <option name="timeStamp" value="233" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/injector/src/main.rs</url>
-          <line>131</line>
-          <option name="timeStamp" value="234" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/dynamic_lab_3/src/main.rs</url>
-          <line>19</line>
-          <option name="timeStamp" value="235" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/string_replace/src/lib.rs</url>
-          <line>208</line>
-          <option name="timeStamp" value="241" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/injector/src/main.rs</url>
-          <line>70</line>
-          <option name="timeStamp" value="247" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/string_replace/src/lib.rs</url>
-          <line>186</line>
-          <option name="timeStamp" value="248" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/string_replace/src/lib.rs</url>
-          <line>178</line>
-          <option name="timeStamp" value="253" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/string_replace/src/lib.rs</url>
-          <line>130</line>
-          <option name="timeStamp" value="259" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/string_replace/src/lib.rs</url>
-          <line>169</line>
-          <option name="timeStamp" value="263" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/injector/src/main.rs</url>
-          <line>78</line>
-          <option name="timeStamp" value="265" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/victim/src/main.rs</url>
-          <line>9</line>
-          <option name="timeStamp" value="266" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/injector/src/main.rs</url>
-          <line>109</line>
-          <option name="timeStamp" value="267" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/victim/src/main.rs</url>
-          <line>8</line>
-          <option name="timeStamp" value="268" />
+          <url>file://$PROJECT_DIR$/thread_pool/src/lib.rs</url>
+          <line>57</line>
+          <option name="timeStamp" value="271" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
