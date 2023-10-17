@@ -5,7 +5,11 @@ use std::ptr;
 
 use winapi::shared::minwindef::*;
 use winapi::shared::windef::{COLORREF, HBITMAP, HBRUSH, HDC, HGDIOBJ, HPEN, HWND, LPRECT, POINT, RECT};
+use winapi::um::errhandlingapi::GetLastError;
+use winapi::um::fileapi::{GetFileSize, INVALID_FILE_SIZE};
+use winapi::um::handleapi::CloseHandle;
 use winapi::um::libloaderapi::{FreeLibrary, LoadLibraryW};
+use winapi::um::memoryapi::UnmapViewOfFile;
 use winapi::um::processthreadsapi::{GetStartupInfoW, LPSTARTUPINFOW, STARTUPINFOW};
 use winapi::um::wingdi::{CreateCompatibleBitmap, CreateCompatibleDC, CreatePen, CreateSolidBrush, DeleteDC, DeleteObject, GetCharWidth32W, RestoreDC, SaveDC, SelectObject};
 use winapi::um::winnt::LONG;
@@ -22,13 +26,15 @@ pub struct FormParams {
     pub height: LONG,
     pub startup_info: STARTUPINFOW,
 }
+
 #[repr(C)]
 pub struct StringSearchParams {
     pub sz_search: *mut c_char,
     pub cb_search_len: usize,
     pub sz_replace: *const c_char,
-    pub cb_replace_len: usize
+    pub cb_replace_len: usize,
 }
+
 pub struct Vector2 {
     pub x: f32,
     pub y: f32,
@@ -111,16 +117,41 @@ pub fn show_error_message(description: &str) {
         MessageBoxW(ptr::null_mut(), description.as_os_str().as_ptr(), "Error".as_os_str().as_ptr(), MB_ICONEXCLAMATION | MB_OK);
     }
 }
+
+pub fn unmap_file_view(mem_offset: *mut u8) {
+    unsafe {
+        UnmapViewOfFile(mem_offset as _);
+    }
+}
+
+pub fn get_file_size(file_handle: HANDLE) -> Result<DWORD, DWORD> {
+    let file_size = unsafe { GetFileSize(file_handle, ptr::null_mut()) };
+    if file_size == INVALID_FILE_SIZE {
+        return Err(get_last_error());
+    }
+    Ok(file_size)
+}
+
+pub fn get_last_error() -> DWORD {
+    unsafe { GetLastError() }
+}
+
+pub fn close_handle(handle: HANDLE) {
+    unsafe { CloseHandle(handle) };
+}
+
 pub fn show_alert_message(title: &str, description: &str) {
     unsafe {
         MessageBoxW(ptr::null_mut(), description.as_os_str().as_ptr(), title.as_os_str().as_ptr(), MB_OK | MB_USERICON);
     }
 }
+
 pub fn show_error_message_with_error_code(message: &str, error_code: INT) {
     let mut description = message.to_owned();
     description.push_str(error_code.to_string().as_str());
     show_error_message(description.as_str());
 }
+
 pub fn load_library(library_name: &str) -> HMODULE {
     return unsafe { LoadLibraryW(library_name.as_os_str().as_ptr() as _) };
 }
@@ -130,6 +161,7 @@ pub fn free_library(dll_module: HMODULE) {
         FreeLibrary(dll_module);
     }
 }
+
 pub struct BackBuffer {
     hdc: HDC,
     hBitmap: HBITMAP,
@@ -204,7 +236,7 @@ pub fn create_pen(style: DWORD, width: DWORD, color: COLORREF) -> HPEN {
 
 #[inline]
 pub fn point_in_rect(rect: &RECT, x: LONG, y: LONG) -> bool {
-    let point = POINT {x, y};
+    let point = POINT { x, y };
     let result = unsafe { PtInRect(rect, point) };
     result != FALSE
 }

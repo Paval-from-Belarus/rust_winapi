@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "utils", "thread_pool"
+    "utils", "thread_pool", "sorter"
 ]
 #[package]
 #name = "lab_1"

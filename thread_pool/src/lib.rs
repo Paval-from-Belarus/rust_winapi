@@ -1,26 +1,29 @@
 #![feature(new_uninit)]
+extern crate utils;
 
-
-use std::cell::RefCell;
 use std::mem::MaybeUninit;
-use std::os::windows::raw::HANDLE;
 use std::ptr;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::Ordering::Relaxed;
 use winapi::shared::minwindef::{DWORD, LPVOID};
 use winapi::um::processthreadsapi::{CreateThread, SwitchToThread};
 use winapi::um::synchapi::{CONDITION_VARIABLE, EnterCriticalSection, InitializeConditionVariable, InitializeCriticalSection, LeaveCriticalSection, SleepConditionVariableCS, WaitForSingleObject, WakeAllConditionVariable, WakeConditionVariable};
 use winapi::um::winbase::INFINITE;
-use winapi::um::wincon::COMMON_LVB_SBCSDBCS;
-use winapi::um::winnt::{ACCESS_MAX_LEVEL, PQUOTA_LIMITS_EX, RTL_CRITICAL_SECTION};
+use winapi::um::winnt::{HANDLE, RTL_CRITICAL_SECTION};
 use utils::bitflags;
 
-extern crate utils;
 
 pub type TaskHandler = fn(*const u8);
 
 pub struct Task {
     handler: TaskHandler,
     param: *const u8,
+    is_done: Arc<Box<AtomicBool>>,
+}
+
+pub struct Future {
+    is_done: Arc<Box<AtomicBool>>,
 }
 
 pub struct ThreadPool {
@@ -46,10 +49,25 @@ pub struct TaskQueue {
     is_interrupted: bool,
 }
 
+impl Future {
+    //wait until task is not completed
+    pub fn get(&self) {
+        while !self.is_done.load(Relaxed) {
+            unsafe {
+                SwitchToThread();
+            }
+        }
+    }
+}
+
 impl Task {
-    pub fn invoke(&self) {
+    fn new(handler: TaskHandler, param: *const u8, is_done: Arc<Box<AtomicBool>>) -> Self {
+        Task { handler, param, is_done }
+    }
+    pub fn invoke(&mut self) {
         let handler = self.handler;
         handler(self.param);
+        self.is_done.store(true, Relaxed);
     }
 }
 
@@ -62,8 +80,11 @@ impl ThreadPool {
         }
         ThreadPool { queue, workers }
     }
-    pub fn submit(&mut self, task: Task) {
+    pub fn submit(&mut self, handler: TaskHandler, param: *const u8) -> Future {
+        let future = Future { is_done: Arc::new(Box::new(AtomicBool::new(false))) };
+        let task = Task::new(handler, param, Arc::clone(&future.is_done));
         self.queue.put(task).expect("The put thread was interrupted");
+        future
     }
     pub fn wait(&mut self) {
         while self.queue.get_size() > 0 {
@@ -71,6 +92,7 @@ impl ThreadPool {
         }
     }
 }
+
 impl Drop for ThreadPool {
     fn drop(&mut self) {
         self.queue.notify_all();
@@ -79,6 +101,7 @@ impl Drop for ThreadPool {
         }
     }
 }
+
 impl TaskQueue {
     pub fn new(size: usize) -> TaskQueue {
         assert_ne!(size, 0);
@@ -182,7 +205,7 @@ impl Worker {
                 println!("The thread {} exits with status {}", self.id, thread_status.0);
                 break;
             }
-            let task = next_task.expect("Unreachable way");
+            let mut task = next_task.expect("Unreachable way");
             task.invoke();
         }
         0
@@ -216,7 +239,7 @@ mod tests {
         for number in 0..7 {
             let handler = unsafe { mem::transmute::<fn(usize), TaskHandler>(print_number) };
             let param = number as *const u8;
-            pool.submit(Task { handler, param });
+            pool.submit(handler, param);
         }
         pool.wait();
     }
