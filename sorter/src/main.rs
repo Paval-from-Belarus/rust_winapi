@@ -44,8 +44,9 @@ struct SortParams<'a> {
 
 impl<'a> Sorter<'a> {
     const SIZE_THRESHOLD: usize = 300;
+    const MAX_WORKERS_COUNT: usize = 20;
     pub fn new(file_offset: *mut u8, file_size: usize) -> Self {
-        let workers_count = (file_size / Sorter::SIZE_THRESHOLD) / 2;
+        let workers_count = usize::min((file_size / Sorter::SIZE_THRESHOLD) / 2, Sorter::MAX_WORKERS_COUNT);
         let average_task_count = workers_count * 2;
         let pool;
         if workers_count <= 1 {
@@ -54,23 +55,27 @@ impl<'a> Sorter<'a> {
             pool = Some(ThreadPool::new(average_task_count, workers_count));
         }
         let bytes = unsafe { slice::from_raw_parts(file_offset, file_size) };
-        let mut last_offset = file_offset;
-        let mut length = 0;
-        let mut array = Vec::<&[u8]>::new();
-        for byte in bytes.iter() {
-            length += 1;
-            if length > 1 && byte.eq(&b'\n') {
-                let next_offset = unsafe { last_offset.add(length) }; //next offset of string
-                let small_string = unsafe { slice::from_raw_parts(last_offset, length - 1) };//only data without last space
-                array.push(small_string);
-                length = 0;
-                last_offset = next_offset;
-            }
-        }
-        if length != 0 {
-            let small_string = unsafe { slice::from_raw_parts(last_offset, length) }; //the last char is not space, so, we can use it
-            array.push(small_string);
-        }
+        let array = std::str::from_utf8(bytes).expect("The source file contains not utf8 symbols")
+            .split("\n")
+            .map(|line| line.as_bytes())
+            .collect::<Vec<&[u8]>>();
+        // let mut last_offset = file_offset;
+        // let mut length = 0;
+        // let mut array = Vec::<&[u8]>::new();
+        // for byte in bytes.iter() {
+        //     length += 1;
+        //     if length > 1 && byte.eq(&b'\n') {
+        //         let next_offset = unsafe { last_offset.add(length) }; //next offset of string
+        //         let small_string = unsafe { slice::from_raw_parts(last_offset, length - 1) };//only data without last space
+        //         array.push(small_string);
+        //         length = 0;
+        //         last_offset = next_offset;
+        //     }
+        // }
+        // if length != 0 {
+        //     let small_string = unsafe { slice::from_raw_parts(last_offset, length) }; //the last char is not space, so, we can use it
+        //     array.push(small_string);
+        // }
         Sorter { file_offset, file_size, pool, array }
     }
 
@@ -96,14 +101,20 @@ impl<'a> Sorter<'a> {
         let last_offset = unsafe { self.file_offset.add(self.file_size) };
         for cloned_str in buffer {
             for byte in cloned_str {
+                if copy_ptr.eq(&last_offset) {
+                    return;
+                }
                 unsafe {
                     copy_ptr.write(byte);
                     copy_ptr = copy_ptr.add(1);
                 }
             }
+            if copy_ptr.eq(&last_offset) {
+                return;
+            }
             // if !copy_ptr.eq(&last_offset) { //to prevent issues
             unsafe {
-                copy_ptr.write(b' ');
+                copy_ptr.write(b'\n');
                 copy_ptr = copy_ptr.add(1);
             }
             // }
@@ -127,12 +138,13 @@ impl<'a> Sorter<'a> {
         let max_future = pool.submit(task_handler, &max_params as *const SortParams as _);
         min_future.get();
         max_future.get();
-        let left: Vec<&[u8]> = array[min_pivot..=middle_pivot].to_vec();
-        let right: Vec<&[u8]> = array[(middle_pivot + 1)..=max_pivot].to_vec();
+        let (left, right) = array.split_at(middle_pivot);
+        // let left: Vec<&[u8]> = array[min_pivot..=middle_pivot].to_vec();
+        // let right: Vec<&[u8]> = array[(middle_pivot + 1)..=max_pivot].to_vec();
         let merged = Sorter::merge(left, right);
         array.splice(min_pivot..=max_pivot, merged);
     }
-    pub fn merge(left: Vec<&'a [u8]>, right: Vec<&'a [u8]>) -> Vec<&'a [u8]> {
+    pub fn merge(left: &[&'a[u8]], right: &[&'a [u8]]) -> Vec<&'a [u8]> {
         let min_length = usize::min(left.len(), right.len());
         let mut target: Vec<&[u8]> = Vec::with_capacity(left.len() + right.len());
         let mut left_pivot = 0;

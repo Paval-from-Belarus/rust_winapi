@@ -19,11 +19,11 @@ pub type TaskHandler = fn(*const u8);
 pub struct Task {
     handler: TaskHandler,
     param: *const u8,
-    is_done: Arc<Box<AtomicBool>>,
+    is_done: Arc<AtomicBool>,
 }
 
 pub struct Future {
-    is_done: Arc<Box<AtomicBool>>,
+    is_done: Arc<AtomicBool>,
 }
 
 pub struct ThreadPool {
@@ -61,7 +61,7 @@ impl Future {
 }
 
 impl Task {
-    fn new(handler: TaskHandler, param: *const u8, is_done: Arc<Box<AtomicBool>>) -> Self {
+    fn new(handler: TaskHandler, param: *const u8, is_done: Arc<AtomicBool>) -> Self {
         Task { handler, param, is_done }
     }
     pub fn invoke(&mut self) {
@@ -81,7 +81,7 @@ impl ThreadPool {
         ThreadPool { queue, workers }
     }
     pub fn submit(&mut self, handler: TaskHandler, param: *const u8) -> Future {
-        let future = Future { is_done: Arc::new(Box::new(AtomicBool::new(false))) };
+        let future = Future { is_done: Arc::new(AtomicBool::new(false)) };
         let task = Task::new(handler, param, Arc::clone(&future.is_done));
         self.queue.put(task).expect("The put thread was interrupted");
         future
@@ -243,7 +243,21 @@ mod tests {
         }
         pool.wait();
     }
-
+    #[test]
+    fn test_futures() {
+        let mut pool = ThreadPool::new(3, 10);
+        let mut futures = Vec::<Future>::with_capacity(10);
+        let handler = unsafe { mem::transmute::<fn(usize), TaskHandler>(print_number) };
+        for i in 0..10 {
+            let future = pool.submit(handler, i as *const u8);
+            futures.push(future);
+        }
+        for (index, future) in futures.iter().enumerate() {
+            future.get();
+            println!("Futures {} is released", index);
+        }
+        pool.submit(handler, 13 as *const u8);
+    }
     pub fn print_number(value: usize) {
         println!("The counter is {}", value);
     }
