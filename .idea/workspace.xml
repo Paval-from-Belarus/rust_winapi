@@ -13,20 +13,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9580f6bf-8016-46c2-9211-c73e8d0148ed" name="Changes" comment="replace arc&lt;box&gt; to pure arc">
-      <change afterPath="$PROJECT_DIR$/process_driver/build.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/process_driver/process_driver.inx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/lab_1.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rust-toolchain.toml" beforeDir="false" afterPath="$PROJECT_DIR$/rust-toolchain.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sorter/Cargo.toml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/sorter/src/main.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/thread_pool/Cargo.toml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/thread_pool/src/lib.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/Cargo.toml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/src/lib.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/process_driver/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/process_driver/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/process_driver/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/process_driver/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test.txt" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -123,6 +113,10 @@
       <workItem from="1700670358757" duration="12000" />
       <workItem from="1700670381555" duration="33000" />
       <workItem from="1700902172801" duration="164000" />
+      <workItem from="1700902347878" duration="985000" />
+      <workItem from="1700903526143" duration="3157000" />
+      <workItem from="1700907000596" duration="1543000" />
+      <workItem from="1700908813848" duration="3279000" />
     </task>
     <task id="LOCAL-00001" summary="add sorter">
       <created>1697545325791</created>

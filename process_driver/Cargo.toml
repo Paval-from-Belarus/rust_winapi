@@ -20,3 +20,6 @@ wdk-sys.workspace = true
 #the additional dependencies
 static_assertions = "1.1.0"
 failure = "0.1.8"
+[features]
+default = []
+nightly = ["wdk/nightly", "wdk-sys/nightly"]
