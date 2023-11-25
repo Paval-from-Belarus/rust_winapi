@@ -1,0 +1,64 @@
+﻿;===================================================================
+; Sample KMDF Driver
+; Copyright (c) Microsoft Corporation
+;===================================================================
+
+[Version]
+Signature   = "$WINDOWS NT$"
+Class       = Sample
+ClassGuid   = {78A1C341-4539-11d3-B88D-00C04FAD5171}
+Provider    = %ProviderString%
+PnpLockDown = 1
+
+[DestinationDirs]
+DefaultDestDir = 13
+
+[SourceDisksNames]
+1 = %DiskId1%,,,""
+
+[SourceDisksFiles]
+process_driver.sys = 1,,
+
+; ================= Class section =====================
+
+[ClassInstall32]
+Addreg=SampleClassReg
+
+[SampleClassReg]
+HKR,,,0,%ClassName%
+HKR,,Icon,,-5
+
+; ================= Install section =================
+
+[Manufacturer]
+%StdMfg%=Standard,NT$ARCH$.10.0...16299
+
+[Standard.NT$ARCH$.10.0...16299]
+%DeviceDesc%=RustProcessSpyDevice, root\RustVirtualDeviceId
+
+[RustProcessSpyDevice.NT$ARCH$]
+CopyFiles=Drivers_Dir
+
+[Drivers_Dir]
+process_driver.sys
+
+; ================= Service installation =================
+[RustProcessSpyDevice.NT$ARCH$.Services]
+AddService = RustProcessSpy, %SPSVCINST_ASSOCSERVICE%, Rust_Process_Spy_Install
+
+[Rust_Process_Spy_Install]
+DisplayName    = %ServiceDesc%
+ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
+StartType      = 3               ; SERVICE_DEMAND_START
+ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %13%\process_driver.sys
+
+; ================= Strings =================
+[Strings]
+SPSVCINST_ASSOCSERVICE = 0x00000002
+ProviderString         = "PetOS Software Foundation"
+StdMfg                 = "(Standard system devices)"
+DiskId1                = "Sample KMDF Installation Disk #1"
+DeviceDesc             = "Rust Process Spy Driver"
+ServiceDesc            = "Rust Process Spy Service"
+ClassName              = "Rust Virtual Device"

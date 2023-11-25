@@ -12,10 +12,21 @@
     <cargoProject FILE="$PROJECT_DIR$/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9580f6bf-8016-46c2-9211-c73e8d0148ed" name="Changes" comment="add sorter">
+    <list default="true" id="9580f6bf-8016-46c2-9211-c73e8d0148ed" name="Changes" comment="replace arc&lt;box&gt; to pure arc">
+      <change afterPath="$PROJECT_DIR$/process_driver/build.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/process_driver/process_driver.inx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/lab_1.iml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sorter/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/sorter/src/main.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/thread_pool/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/thread_pool/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/rust-toolchain.toml" beforeDir="false" afterPath="$PROJECT_DIR$/rust-toolchain.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sorter/Cargo.toml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/sorter/src/main.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/thread_pool/Cargo.toml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/thread_pool/src/lib.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/Cargo.toml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/src/lib.rs" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -24,6 +35,13 @@
   </component>
   <component name="ClangdSettings">
     <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Rust File" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -48,115 +66,23 @@
     &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
     &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
     &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;lab-4&quot;,
-    &quot;last_opened_file_path&quot;: &quot;E:/linux/lab_1/target/debug&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;lab-5&quot;,
+    &quot;last_opened_file_path&quot;: &quot;E:/linux/lab_1/process_driver&quot;,
     &quot;org.rust.cargo.project.model.PROJECT_DISCOVERY&quot;: &quot;true&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;language.rust.cargo.check&quot;
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;
   }
 }</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="E:\linux\lab_1\process_driver" />
       <recent name="E:\linux\lab_1\target\debug" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="E:\linux\lab_1\process_driver" />
     </key>
   </component>
   <component name="RsExternalLinterProjectSettings">
     <option name="runOnTheFly" value="true" />
-  </component>
-  <component name="RunManager" selected="Cargo.Run sorter">
-    <configuration name="Expand sorter" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
-      <option name="command" value="expand --bin sorter --color=always --theme=Dracula --tests" />
-      <option name="workingDirectory" value="file://$PROJECT_DIR$/sorter" />
-      <option name="emulateTerminal" value="true" />
-      <option name="channel" value="DEFAULT" />
-      <option name="requiredFeatures" value="true" />
-      <option name="allFeatures" value="false" />
-      <option name="withSudo" value="false" />
-      <option name="buildTarget" value="REMOTE" />
-      <option name="backtrace" value="SHORT" />
-      <envs />
-      <option name="isRedirectInput" value="false" />
-      <option name="redirectInputPath" value="" />
-      <method v="2">
-        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="Run sorter" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
-      <option name="command" value="run --package sorter --bin sorter" />
-      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
-      <option name="emulateTerminal" value="true" />
-      <option name="channel" value="DEFAULT" />
-      <option name="requiredFeatures" value="true" />
-      <option name="allFeatures" value="false" />
-      <option name="withSudo" value="false" />
-      <option name="buildTarget" value="REMOTE" />
-      <option name="backtrace" value="SHORT" />
-      <envs />
-      <option name="isRedirectInput" value="false" />
-      <option name="redirectInputPath" value="" />
-      <method v="2">
-        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="Test lib::tests" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
-      <option name="command" value="test --package thread_pool --lib tests" />
-      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
-      <option name="emulateTerminal" value="true" />
-      <option name="channel" value="DEFAULT" />
-      <option name="requiredFeatures" value="true" />
-      <option name="allFeatures" value="false" />
-      <option name="withSudo" value="false" />
-      <option name="buildTarget" value="REMOTE" />
-      <option name="backtrace" value="SHORT" />
-      <envs />
-      <option name="isRedirectInput" value="false" />
-      <option name="redirectInputPath" value="" />
-      <method v="2">
-        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="Test tests::it_works (1)" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
-      <option name="command" value="test --package thread_pool --lib tests::it_works -- --exact" />
-      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
-      <option name="emulateTerminal" value="true" />
-      <option name="channel" value="DEFAULT" />
-      <option name="requiredFeatures" value="true" />
-      <option name="allFeatures" value="false" />
-      <option name="withSudo" value="false" />
-      <option name="buildTarget" value="REMOTE" />
-      <option name="backtrace" value="SHORT" />
-      <envs />
-      <option name="isRedirectInput" value="false" />
-      <option name="redirectInputPath" value="" />
-      <method v="2">
-        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="Test tests::it_works" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
-      <option name="command" value="test --package sorter --bin sorter tests::it_works -- --exact" />
-      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
-      <option name="emulateTerminal" value="true" />
-      <option name="channel" value="DEFAULT" />
-      <option name="requiredFeatures" value="true" />
-      <option name="allFeatures" value="false" />
-      <option name="withSudo" value="false" />
-      <option name="buildTarget" value="REMOTE" />
-      <option name="backtrace" value="SHORT" />
-      <envs />
-      <option name="isRedirectInput" value="false" />
-      <option name="redirectInputPath" value="" />
-      <method v="2">
-        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
-      </method>
-    </configuration>
-    <recent_temporary>
-      <list>
-        <item itemvalue="Cargo.Run sorter" />
-        <item itemvalue="Cargo.Test lib::tests" />
-        <item itemvalue="Cargo.Test tests::it_works" />
-        <item itemvalue="Cargo.Test tests::it_works (1)" />
-        <item itemvalue="Cargo.Expand sorter" />
-      </list>
-    </recent_temporary>
   </component>
   <component name="RustProjectSettings">
     <option name="toolchainHomeDirectory" value="$USER_HOME$/.cargo/bin" />
@@ -176,7 +102,27 @@
       <workItem from="1697555290451" duration="99000" />
       <workItem from="1697572675813" duration="3277000" />
       <workItem from="1697631583720" duration="3696000" />
-      <workItem from="1698238606677" duration="399000" />
+      <workItem from="1698238606677" duration="967000" />
+      <workItem from="1700054900825" duration="519000" />
+      <workItem from="1700055851353" duration="200000" />
+      <workItem from="1700056269809" duration="4125000" />
+      <workItem from="1700065709555" duration="32000" />
+      <workItem from="1700065783616" duration="118000" />
+      <workItem from="1700065914070" duration="2941000" />
+      <workItem from="1700069473993" duration="1662000" />
+      <workItem from="1700084138842" duration="3084000" />
+      <workItem from="1700329617446" duration="3344000" />
+      <workItem from="1700333007516" duration="826000" />
+      <workItem from="1700333848155" duration="744000" />
+      <workItem from="1700335096617" duration="181000" />
+      <workItem from="1700335314305" duration="520000" />
+      <workItem from="1700335847930" duration="1295000" />
+      <workItem from="1700465248785" duration="1069000" />
+      <workItem from="1700466341527" duration="1820000" />
+      <workItem from="1700650308165" duration="9339000" />
+      <workItem from="1700670358757" duration="12000" />
+      <workItem from="1700670381555" duration="33000" />
+      <workItem from="1700902172801" duration="164000" />
     </task>
     <task id="LOCAL-00001" summary="add sorter">
       <created>1697545325791</created>
@@ -185,12 +131,20 @@
       <option name="project" value="LOCAL" />
       <updated>1697545325791</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="replace arc&lt;box&gt; to pure arc">
+      <created>1698239090982</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1698239090982</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="add sorter" />
-    <option name="LAST_COMMIT_MESSAGE" value="add sorter" />
+    <MESSAGE value="replace arc&lt;box&gt; to pure arc" />
+    <option name="LAST_COMMIT_MESSAGE" value="replace arc&lt;box&gt; to pure arc" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

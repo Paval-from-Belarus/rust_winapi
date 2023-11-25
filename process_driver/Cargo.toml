@@ -1,0 +1,22 @@
+[package]
+name = "process_driver"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+
+lto = true # optional setting to enable Link Time Optimizations
+
+[build-dependencies]
+wdk-build.workspace = true
+[dependencies]
+wdk.workspace = true
+wdk-alloc.workspace = true
+wdk-macros.workspace = true
+wdk-panic.workspace = true
+wdk-sys.workspace = true
+#the additional dependencies
+static_assertions = "1.1.0"
+failure = "0.1.8"
