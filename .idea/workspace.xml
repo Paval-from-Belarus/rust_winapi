@@ -12,12 +12,7 @@
     <cargoProject FILE="$PROJECT_DIR$/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9580f6bf-8016-46c2-9211-c73e8d0148ed" name="Changes" comment="replace arc&lt;box&gt; to pure arc">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/process_driver/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/process_driver/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/process_driver/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/process_driver/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test.txt" beforeDir="false" />
-    </list>
+    <list default="true" id="9580f6bf-8016-46c2-9211-c73e8d0148ed" name="Changes" comment="replace arc&lt;box&gt; to pure arc" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -57,13 +52,14 @@
     &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
     &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;lab-5&quot;,
-    &quot;last_opened_file_path&quot;: &quot;E:/linux/lab_1/process_driver&quot;,
+    &quot;last_opened_file_path&quot;: &quot;E:/linux/lab_1/echo_2&quot;,
     &quot;org.rust.cargo.project.model.PROJECT_DISCOVERY&quot;: &quot;true&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;
   }
 }</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="E:\linux\lab_1\echo_2" />
       <recent name="E:\linux\lab_1\process_driver" />
       <recent name="E:\linux\lab_1\target\debug" />
     </key>
@@ -116,7 +112,12 @@
       <workItem from="1700902347878" duration="985000" />
       <workItem from="1700903526143" duration="3157000" />
       <workItem from="1700907000596" duration="1543000" />
-      <workItem from="1700908813848" duration="3279000" />
+      <workItem from="1700908813848" duration="4100000" />
+      <workItem from="1700913310103" duration="1538000" />
+      <workItem from="1700915223600" duration="208000" />
+      <workItem from="1700954396203" duration="881000" />
+      <workItem from="1700998198636" duration="597000" />
+      <workItem from="1700998891270" duration="13891000" />
     </task>
     <task id="LOCAL-00001" summary="add sorter">
       <created>1697545325791</created>
