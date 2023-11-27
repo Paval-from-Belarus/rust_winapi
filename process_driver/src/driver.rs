@@ -1,15 +1,21 @@
-// Copyright (c) Microsoft Corporation.
-// License: MIT OR Apache-2.0
-
 use wdk::{nt_success, paged_code, println};
 use wdk_sys::{DRIVER_OBJECT, HANDLE, macros, ntddk::KeGetCurrentIrql, NTSTATUS, *};
 
 extern crate alloc;
 
 use alloc::{slice, string::String};
-use alloc::vec::Vec;
+use alloc::boxed::Box;
+
+use alloc::string::ToString;
+
 use core::{mem, ptr};
-use nt_string::unicode_string::{NtUnicodeStr};
+use core::ffi::CStr;
+
+use core::ptr::NonNull;
+
+use wdk_sys::_WORK_QUEUE_TYPE::DelayedWorkQueue;
+use wdk_sys::ntddk::{IoAllocateWorkItem, IoCreateDevice, IoCreateNotificationEvent, IoDeleteDevice, IofCompleteRequest, IoFreeWorkItem, IoGetAttachedDevice, IoQueueWorkItem, MmGetSystemRoutineAddress, PsLookupProcessByProcessId, PsSetCreateProcessNotifyRoutine};
+use crate::utils::{add_notify_callback, KernelEvent, remove_notify_callback, WindowsUnicode};
 
 pub struct StringObject {
     handle: WDFSTRING,
@@ -31,26 +37,17 @@ impl StringObject {
         }
         Self { handle }
     }
-    pub fn wrap(string: &str) -> Self {
-        let bytes = string.as_bytes();
-        let mut buffer = Vec::<u16>::with_capacity(bytes.len());
-        for byte in bytes.iter() {
-            buffer.push(*byte as u16);
-        }
-        let wrapper = NtUnicodeStr::try_from_u16(buffer.as_slice())
-            .expect("Failed to convert Rust Str to Unicode");
+    pub fn wrap(string: &UNICODE_STRING) -> Self {
         let mut handle: WDFSTRING = ptr::null_mut();
         let nt_status = unsafe {
             macros::call_unsafe_wdf_function_binding!(
                 WdfStringCreate,
-                wrapper.as_ptr() as *const UNICODE_STRING,
+                string,
                 WDF_NO_OBJECT_ATTRIBUTES,
                 &mut handle
             )
         };
-        if !nt_success(nt_status) {
-            panic!("WdfStringCreate with wrapper failed {nt_status:#010X}");
-        }
+        assert!(nt_success(nt_status), "WdfStringCreate with wrapper failed {nt_status:#010X}");
         Self { handle }
     }
     pub fn as_unicode(&self) -> UNICODE_STRING {
@@ -60,7 +57,7 @@ impl StringObject {
                 WdfStringGetUnicodeString,
                 self.handle,
                 &mut string
-            )
+            );
         }];
         string
     }
@@ -80,19 +77,174 @@ impl Drop for StringObject {
     }
 }
 
-fn from_unicode(value: UNICODE_STRING) -> String {
-    let slice = unsafe {
-        slice::from_raw_parts(
-            value.Buffer,
-            value.Length as usize / mem::size_of_val(&(*value.Buffer)))
+fn find_pid_resolver() -> ProcessNameResolver {
+    let mut resolver_name = "PsGetProcessImageFileName".to_string().to_unicode();
+    let resolver = unsafe {
+        let address: PVOID = MmGetSystemRoutineAddress(&mut resolver_name);
+        debug_assert!(!address.is_null(), "Failed to find GetProcessImageFileName");
+        mem::transmute::<PVOID, ProcessNameResolver>(address)
     };
-    String::from_utf16_lossy(slice)
+    resolver
 }
 
-fn get_file_name_by_pid(handle: HANDLE) -> PSTR {
-    let string = UNICODE_STRING::default();
-    let wdf_string: WDFSTRING = ptr::null_mut();
-    todo!()
+pub struct SpyWorker {
+    handle: PIO_WORKITEM,
+    proc: HANDLE,
+    //the process with which interact
+    is_created: BOOLEAN,
+    //the process state
+    spy: NonNull<ProcessSpy>,
+}
+
+impl SpyWorker {
+    pub fn new(mut spy: NonNull<ProcessSpy>, proc: HANDLE, is_created: BOOLEAN) -> Box<SpyWorker> {
+        let device = unsafe { spy.as_mut().device() };
+        let handle = unsafe { IoAllocateWorkItem(device) };
+        Box::new(Self { handle, spy, proc, is_created })
+    }
+    pub const fn handle(&self) -> PIO_WORKITEM {
+        self.handle
+    }
+    pub unsafe extern "C" fn dispatch_wrapper(_device: *mut DEVICE_OBJECT, context: PVOID) {
+        println!("Starting worker dispatching");
+        let mut worker = Box::from_raw(context.cast::<Self>());
+        let spy = worker.spy.as_mut();
+        spy.dispatch(worker.proc, worker.is_created);
+    }
+}
+
+impl Drop for SpyWorker {
+    fn drop(&mut self) {
+        unsafe { IoFreeWorkItem(self.handle) }
+    }
+}
+
+///the main struct that control situation
+pub struct ProcessSpy {
+    device: NonNull<DEVICE_OBJECT>,
+    //events to communicate with user-mode manager that should start/close corresponding process
+    create_event: KernelEvent,
+    exit_event: KernelEvent,
+    pid_resolver: ProcessNameResolver,
+}
+
+unsafe impl Send for ProcessSpy {}
+
+unsafe impl Sync for ProcessSpy {}
+
+type ProcessNameResolver = fn(PEPROCESS) -> PCHAR;
+
+
+impl ProcessSpy {
+    const TRACKABLE_PROCESS_NAME: &'static CStr = unsafe {
+        CStr::from_bytes_with_nul_unchecked(
+            "firefox.exe\0".as_bytes()
+        )
+    };
+    pub fn new(driver: &mut DRIVER_OBJECT) -> Result<&'static mut Self, NTSTATUS> {
+        let device: *mut DEVICE_OBJECT = ptr::null_mut();
+        let nt_status = unsafe {
+            IoCreateDevice(
+                driver,
+                mem::size_of::<ProcessSpy>() as ULONG,
+                ptr::null_mut(),
+                FILE_DEVICE_UNKNOWN,
+                0,
+                FALSE as BOOLEAN,
+                &mut (device as *mut DEVICE_OBJECT),
+            )
+        };
+        if !nt_success(nt_status) {
+            return Err(nt_status);
+        }
+        debug_assert_ne!(device, ptr::null_mut(), "Process spy cannot be null after initialization");
+        let create_event_name = concat!("\\BaseNamedObjects\\", "RustProcessSpyCreateEvent")
+            .to_string();
+        let exit_event_name = concat!("\\BaseNamedObjects\\", "RustProcessSpyExitEvent")
+            .to_string();
+        let create_event = KernelEvent::new(&create_event_name);
+        let exit_event = KernelEvent::new(&exit_event_name);
+        let pid_resolver = find_pid_resolver();
+        let spy = unsafe {
+            let spy_layout = (*device).DeviceExtension.cast::<Self>();
+            spy_layout.write(ProcessSpy {
+                device: NonNull::new_unchecked(device),
+                create_event,
+                exit_event,
+                pid_resolver,
+            });
+            &mut *spy_layout
+        };
+        Ok(spy)
+    }
+
+    pub fn dispatch(&mut self, pid: HANDLE, is_created: BOOLEAN) {
+        let mut process_info: PEPROCESS = ptr::null_mut();
+        let nt_status = unsafe { PsLookupProcessByProcessId(pid, &mut process_info) };
+        if !nt_success(nt_status) {
+            println!("Failed to lookup process by id {nt_status:#010X}");
+            return;
+        }
+        let pid_resolver = self.pid_resolver;
+        let process_name = unsafe {
+            let pid_name = pid_resolver(process_info);
+            CStr::from_ptr(pid_name)
+        };
+
+        match process_name.to_str() {
+            Ok(rust_string) => {
+                println!("Process {rust_string} is catched");
+            }
+            Err(_) => {
+                println!("Failed to parse UTF-8 from process name");
+            }
+        }
+
+        if !Self::same_with_trackable(process_name) {
+            return;
+        }
+        if is_created == TRUE as BOOLEAN {
+            self.create_event.raise();
+        } else {
+            self.exit_event.raise();
+        }
+    }
+    fn same_with_trackable(process_name: &CStr) -> bool {
+        process_name.eq(Self::TRACKABLE_PROCESS_NAME)
+    }
+    pub fn device(&mut self) -> &mut DEVICE_OBJECT {
+        unsafe { self.device.as_mut() }
+    }
+    pub unsafe fn free(&mut self) {
+        IoDeleteDevice(self.device.as_mut());
+        self.create_event.free();
+        self.exit_event.free();
+    }
+}
+
+
+static CURRENT_SPY: spin::Mutex<Option<&'static mut ProcessSpy>> = spin::Mutex::new(None);
+
+fn current_spy() -> NonNull<ProcessSpy> {
+    let mut guard = CURRENT_SPY.lock();
+    let spy = guard.as_deref_mut().expect("The Process Spy should be initialized");
+    NonNull::from(spy)
+}
+
+fn replace_current_spy(spy: &'static mut ProcessSpy) -> Option<&'static mut ProcessSpy> {
+    CURRENT_SPY.lock().replace(spy)
+}
+
+///the process callback that will be invoked each time when new process is created
+pub unsafe extern "C" fn notify_callback(_parent: HANDLE, child: HANDLE, is_created: BOOLEAN) {
+    let spy = current_spy();
+    let worker = SpyWorker::new(spy, child, is_created);
+    IoQueueWorkItem(
+        worker.handle(),
+        Some(SpyWorker::dispatch_wrapper),
+        DelayedWorkQueue,
+        Box::leak(worker) as *mut SpyWorker as _,
+    );
 }
 
 /// DriverEntry initializes the driver and is the first routine called by the
@@ -121,7 +273,7 @@ extern "system" fn driver_entry(
     registry_path: PCUNICODE_STRING,
 ) -> NTSTATUS {
     let mut driver_config = WDF_DRIVER_CONFIG {
-        Size: core::mem::size_of::<WDF_DRIVER_CONFIG>() as ULONG,
+        Size: mem::size_of::<WDF_DRIVER_CONFIG>() as ULONG,
         EvtDriverDeviceAdd: Some(echo_evt_device_add),
         ..WDF_DRIVER_CONFIG::default()
     };
@@ -141,10 +293,61 @@ extern "system" fn driver_entry(
         return nt_status;
     }
     echo_print_driver_version();
-
+    init_driver_functions(driver);
+    let spy_result = ProcessSpy::new(driver);
+    match spy_result {
+        Ok(spy) => {
+            let old = replace_current_spy(spy);
+            debug_assert!(old.is_none());
+        }
+        Err(code) => {
+            return code;
+        }
+    }
+    add_notify_callback(Some(notify_callback));
     nt_status
 }
 
+fn init_driver_functions(driver: &mut DRIVER_OBJECT) {
+    for (index, function) in driver.MajorFunction.iter_mut().enumerate() {
+        let proc_index = index as u32;
+        if proc_index == IRP_MJ_CREATE || proc_index == IRP_MJ_CLOSE {
+            *function = Some(create_close_function);
+        } else {
+            *function = Some(unsupported_function);
+        }
+    }
+    driver.DriverUnload = Some(unload_driver);
+}
+
+extern "C" fn unsupported_function(_device: *mut DEVICE_OBJECT, irp: *mut IRP) -> NTSTATUS {
+    println!("Unsupported handler was invoked");
+    let request = unsafe { &mut *irp };
+    let status_block = &mut request.IoStatus;
+    status_block.__bindgen_anon_1.Status = STATUS_NOT_SUPPORTED;
+    status_block.Information = 0;
+    unsafe { IofCompleteRequest(irp, IO_NO_INCREMENT as _) };
+    STATUS_SUCCESS
+}
+
+extern "C" fn create_close_function(_device: *mut DEVICE_OBJECT, irp: *mut IRP) -> NTSTATUS {
+    println!("Create-Close handler was invoked");
+    let request = unsafe { &mut *irp };
+    let status_block = &mut request.IoStatus;
+    status_block.__bindgen_anon_1.Status = STATUS_SUCCESS;
+    status_block.Information = 0;
+    unsafe { IofCompleteRequest(irp, IO_NO_INCREMENT as _) };
+    STATUS_SUCCESS
+}
+
+extern "C" fn unload_driver(_driver: *mut DRIVER_OBJECT) {
+    unsafe {
+        let spy = current_spy().as_mut();
+        spy.free();
+        remove_notify_callback(Some(notify_callback));
+    }
+    println!("Driver is unloaded");
+}
 
 /// EvtDeviceAdd is called by the framework in response to AddDevice
 /// call from the PnP manager. We create and initialize a device object to
@@ -159,7 +362,7 @@ extern "system" fn driver_entry(
 ///
 ///   * `NTSTATUS`
 #[link_section = "PAGE"]
-extern "C" fn echo_evt_device_add(_driver: WDFDRIVER, device_init: PWDFDEVICE_INIT) -> NTSTATUS {
+extern "C" fn echo_evt_device_add(_driver: WDFDRIVER, _device_init: PWDFDEVICE_INIT) -> NTSTATUS {
     paged_code!();
 
     println!("Enter  EchoEvtDeviceAdd");

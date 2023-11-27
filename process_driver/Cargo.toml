@@ -18,6 +18,8 @@ wdk-macros.workspace = true
 wdk-panic.workspace = true
 wdk-sys.workspace = true
 nt-string.workspace = true
+spin = "0.9.8"
+winapi = {version = "0.3.9", features = ["winuser", "winbase"]}
 #the additional dependencies
 static_assertions = "1.1.0"
 failure = "0.1.8"

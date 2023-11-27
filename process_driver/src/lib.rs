@@ -1,3 +1,4 @@
+#![feature(ascii_char)]
 // Copyright (c) Microsoft Corporation.
 // License: MIT OR Apache-2.0
 
@@ -38,11 +39,13 @@
 #![allow(clippy::missing_safety_doc)]
 
 mod driver;
+mod utils;
 
 #[cfg(not(test))]
 extern crate wdk_panic;
 extern crate alloc;
 
+extern crate winapi;
 #[cfg(not(test))]
 use wdk_alloc::WDKAllocator;
 
