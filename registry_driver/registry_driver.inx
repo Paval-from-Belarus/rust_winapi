@@ -34,7 +34,7 @@ HKR,,Icon,,-5
 %StdMfg%=Standard,NT$ARCH$.10.0...16299
 
 [Standard.NT$ARCH$.10.0...16299]
-%DeviceDesc%=RustRegistryLog, root\RustLogDeviceId
+%DeviceDesc%=RustRegistryLog, root\RustVirtualDeviceId
 
 [RustRegistryLogDevice.NT$ARCH$]
 CopyFiles=Drivers_Dir

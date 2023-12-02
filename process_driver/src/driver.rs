@@ -142,11 +142,7 @@ type ProcessNameResolver = fn(PEPROCESS) -> PCHAR;
 
 
 impl ProcessSpy {
-    const TRACKABLE_PROCESS_NAME: &'static CStr = unsafe {
-        CStr::from_bytes_with_nul_unchecked(
-            b"firefox.exe\0"
-        )
-    };
+    const TRACKABLE_PROCESS_NAME: &'static [u8] = b"firefox.exe";
     pub fn new(driver: &mut DRIVER_OBJECT) -> Result<&'static mut Self, NTSTATUS> {
         let mut device: *mut DEVICE_OBJECT = ptr::null_mut();
         let nt_status = unsafe {
@@ -214,13 +210,22 @@ impl ProcessSpy {
             return;
         }
         if is_created == TRUE as BOOLEAN {
+            println!("Firefox created!");
             self.create_event.raise();
         } else {
+            println!("Firefox left!");
             self.exit_event.raise();
         }
     }
     fn same_with_trackable(process_name: &CStr) -> bool {
-        process_name.eq(Self::TRACKABLE_PROCESS_NAME)
+        let bytes = process_name.to_bytes();
+        let mut index = 0;
+        let mut same = true;
+        while same && index < usize::min(bytes.len(), Self::TRACKABLE_PROCESS_NAME.len()) {
+            same = bytes[index] == Self::TRACKABLE_PROCESS_NAME[index];
+            index += 1;
+        }
+        same
     }
     pub fn device(&mut self) -> &mut DEVICE_OBJECT {
         unsafe { self.device.as_mut() }
@@ -229,6 +234,7 @@ impl ProcessSpy {
         IoDeleteDevice(self.device.as_mut());
         self.create_event.free();
         self.exit_event.free();
+        println!("The spy is deleted");
     }
 }
 
@@ -354,7 +360,6 @@ extern "C" fn create_close_function(_device: *mut DEVICE_OBJECT, irp: *mut IRP) 
     STATUS_SUCCESS
 }
 
-#[link_section = "PAGE"]
 extern "C" fn unload_driver(_driver: *mut DRIVER_OBJECT) {
     println!("Driver unloading is started");
     unsafe {

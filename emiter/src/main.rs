@@ -1,21 +1,22 @@
+use std::collections::VecDeque;
 use std::ffi::CStr;
 use std::mem::MaybeUninit;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 use std::{mem, ptr};
 use winapi::shared::minwindef::{DWORD, FALSE, LPVOID};
+use winapi::um::errhandlingapi::GetLastError;
+use winapi::um::handleapi::CloseHandle;
 use winapi::um::processthreadsapi::{
-    CreateProcessA, CreateThread, TerminateThread, PROCESS_INFORMATION, STARTUPINFOA,
+    CreateProcessA, CreateThread, TerminateProcess, TerminateThread, PROCESS_INFORMATION,
+    STARTUPINFOA,
 };
 use winapi::um::synchapi::{OpenEventA, WaitForSingleObject};
 use winapi::um::winbase::{CREATE_UNICODE_ENVIRONMENT, WAIT_OBJECT_0};
 use winapi::um::winnt::{HANDLE, SYNCHRONIZE};
-use winapi::um::winuser::SENDASYNCPROC;
 
-const CREATE_EVENT_NAME: &'static CStr =
-    unsafe { CStr::from_bytes_with_nul_unchecked(b"RustProcessSpyCreateEvent\0") };
-const EXIT_EVENT_NAME: &'static CStr =
-    unsafe { CStr::from_bytes_with_nul_unchecked(b"RustProcessSpyExitEvent\0") };
+const CREATE_EVENT_NAME: &'static [u8] = b"Global\\RustProcessSpyCreate\0";
+const EXIT_EVENT_NAME: &'static [u8] = b"Global\\RustProcessSpyExit\0";
 
 static IS_ALIVE: AtomicBool = AtomicBool::new(true);
 
@@ -27,16 +28,22 @@ unsafe impl Send for Process {}
 
 unsafe impl Sync for Process {}
 
-static RUNNING: Mutex<Vec<Process>> = Mutex::new(Vec::new());
+static RUNNING: Mutex<VecDeque<Process>> = Mutex::new(VecDeque::new());
 
 pub extern "system" fn create_process_task(_context: LPVOID) -> DWORD {
-    let event = unsafe { OpenEventA(SYNCHRONIZE, FALSE, CREATE_EVENT_NAME.as_ptr()) };
+    let event = unsafe { OpenEventA(SYNCHRONIZE, FALSE, CREATE_EVENT_NAME.as_ptr() as _) };
+    if event.is_null() {
+        let code = unsafe { GetLastError() };
+        println!("The create event is null. error_code={code}");
+        IS_ALIVE.store(false, Ordering::SeqCst);
+        return 1;
+    }
     while IS_ALIVE.load(Ordering::SeqCst) {
         let status = unsafe { WaitForSingleObject(event, 1000) };
         if IS_ALIVE.load(Ordering::SeqCst) && status == WAIT_OBJECT_0 {
             let mut startup_info = unsafe { MaybeUninit::<STARTUPINFOA>::zeroed().assume_init() };
             startup_info.cb = mem::size_of::<STARTUPINFOA>() as DWORD;
-            let file_name = b"C:\\drivers\\ultimate.exe";
+            let file_name = b"c:\\drivers\\ultimate.exe\0";
             let mut process_info = MaybeUninit::<PROCESS_INFORMATION>::uninit();
             let result = unsafe {
                 CreateProcessA(
@@ -52,17 +59,49 @@ pub extern "system" fn create_process_task(_context: LPVOID) -> DWORD {
                     process_info.as_mut_ptr(),
                 )
             };
-            unsafe { process_info.assume_init() };
+            let process_info = unsafe { process_info.assume_init() };
+            if result == FALSE {
+                println!("Failed to start parallel process...(")
+            } else {
+                println!("Ultimate started!");
+                let mut handles = RUNNING.lock().expect("No one can panic here!");
+                handles.push_back(Process {
+                    handle: process_info.hProcess,
+                });
+            }
         }
     }
+    unsafe { CloseHandle(event) };
     0
 }
 
 pub extern "system" fn exit_process_task(_context: LPVOID) -> DWORD {
+    let event = unsafe { OpenEventA(SYNCHRONIZE, FALSE, EXIT_EVENT_NAME.as_ptr() as _) };
+    if event.is_null() {
+        let code = unsafe { GetLastError() };
+        println!("exit event is null. error_code={code}");
+        IS_ALIVE.store(false, Ordering::SeqCst);
+        return 1;
+    }
+    while IS_ALIVE.load(Ordering::SeqCst) {
+        let status = unsafe { WaitForSingleObject(event, 1000) };
+        if IS_ALIVE.load(Ordering::SeqCst) && status == WAIT_OBJECT_0 {
+            let mut handles = RUNNING.lock().expect("We no panic too!");
+            let removable_option = handles.pop_front();
+            if let Some(removed) = removable_option {
+                let _ = unsafe { TerminateProcess(removed.handle, 42) };
+                unsafe { CloseHandle(removed.handle) };
+            } else {
+                println!("We too late too remove anything from deque...(")
+            }
+        }
+    }
+    unsafe { CloseHandle(event) };
     0
 }
 
 fn main() {
+    println!("Not New");
     let create_task_thread = unsafe {
         CreateThread(
             ptr::null_mut(),
@@ -95,4 +134,5 @@ fn main() {
         println!("The exit thread will be suppressed");
         unsafe { TerminateThread(exit_task_thread, 1) };
     }
+    println!("Thanks for working with us!)");
 }
