@@ -42,10 +42,14 @@ mod driver;
 mod utils;
 
 #[cfg(not(test))]
-extern crate wdk_panic;
+#[panic_handler]
+pub fn panic(info: &core::panic::PanicInfo) -> ! {
+    wdk::println!("Driver panics={info}");
+    loop {}
+}
+
 extern crate alloc;
 
-extern crate winapi;
 #[cfg(not(test))]
 use wdk_alloc::WDKAllocator;
 

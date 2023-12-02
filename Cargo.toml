@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "process_driver", "emiter"
+    "process_driver", "emiter", "registry_driver"
 ]
 resolver = "2"
 [profile.dev]

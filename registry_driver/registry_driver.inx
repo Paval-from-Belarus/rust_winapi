@@ -17,7 +17,7 @@ DefaultDestDir = 13
 1 = %DiskId1%,,,""
 
 [SourceDisksFiles]
-process_driver.sys = 1,,
+registry_driver.sys = 1,,
 
 ; ================= Class section =====================
 
@@ -34,24 +34,24 @@ HKR,,Icon,,-5
 %StdMfg%=Standard,NT$ARCH$.10.0...16299
 
 [Standard.NT$ARCH$.10.0...16299]
-%DeviceDesc%=RustProcessSpyDevice, root\RustVirtualDeviceId
+%DeviceDesc%=RustRegistryLog, root\RustLogDeviceId
 
-[RustProcessSpyDevice.NT$ARCH$]
+[RustRegistryLogDevice.NT$ARCH$]
 CopyFiles=Drivers_Dir
 
 [Drivers_Dir]
-process_driver.sys
+registry_driver.sys
 
 ; ================= Service installation =================
-[RustProcessSpyDevice.NT$ARCH$.Services]
-AddService = RustProcessSpy, %SPSVCINST_ASSOCSERVICE%, Rust_Process_Spy_Install
+[RustRegistryLogDevice.NT$ARCH$.Services]
+AddService = RustRegistryLog, %SPSVCINST_ASSOCSERVICE%, Rust_Process_Spy_Install
 
 [Rust_Process_Spy_Install]
 DisplayName    = %ServiceDesc%
 ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
 StartType      = 3               ; SERVICE_DEMAND_START
 ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
-ServiceBinary  = %13%\process_driver.sys
+ServiceBinary  = %13%\registry_driver.sys
 
 ; ================= Strings =================
 [Strings]
@@ -59,6 +59,6 @@ SPSVCINST_ASSOCSERVICE = 0x00000002
 ProviderString         = "PetOS Software Foundation"
 StdMfg                 = "(Standard system devices)"
 DiskId1                = "Sample KMDF Installation Disk #1"
-DeviceDesc             = "Rust Process Spy Driver"
-ServiceDesc            = "Rust Process Spy Service"
+DeviceDesc             = "Rust Registry Log Driver"
+ServiceDesc            = "Rust Registry Log Service"
 ClassName              = "Rust Virtual Device"

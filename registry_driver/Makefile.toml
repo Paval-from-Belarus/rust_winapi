@@ -8,19 +8,11 @@ VC_BUILD_DIR = "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\
 # FIXME: add --locked for CI builds using CARGO_MAKE_PR and CARGO_MAKE_CI
 CARGO_MAKE_CARGO_BUILD_TEST_FLAGS = "--profile ${CARGO_MAKE_CARGO_PROFILE}"
 # Cargo puts "dev" profile builds in the "debug" target folder: https://doc.rust-lang.org/cargo/guide/build-cache.html#build-cache. This supports cargo-make profile values of both "development" and "dev"
-OUTPUT_DIR = { source = "${CARGO_MAKE_CARGO_PROFILE}", default_value = "${CARGO_MAKE_CRATE_TARGET_DIRECTORY}\\${CARGO_MAKE_CARGO_PROFILE}", mapping = { "dev" = "${CARGO_MAKE_CRATE_TARGET_DIRECTORY}\\debug"} }
-[tasks.clean]
-command = "cargo"
-args = ["clean", "-p", "process_driver"]
-[tasks.build]
-command = "cargo"
-args = ["build"]
-dependencies = ["clean"]
+OUTPUT_DIR = { source = "${CARGO_MAKE_CARGO_PROFILE}", default_value = "${CARGO_MAKE_CRATE_TARGET_DIRECTORY}\\${CARGO_MAKE_CARGO_PROFILE}", mapping = { "dev" = "${CARGO_MAKE_CRATE_TARGET_DIRECTORY}\\debug" } }
+
 [tasks.rename-dll-to-sys]
 dependencies = ["build"]
 script = '''
-echo %CARGO_MAKE_CARGO_PROFILE%
-echo %CARGO_MAKE_CARGO_PROFILE%
 echo "%OUTPUT_DIR%"
 cd "%OUTPUT_DIR%"
 mkdir package

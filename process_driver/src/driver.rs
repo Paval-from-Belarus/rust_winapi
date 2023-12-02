@@ -12,9 +12,10 @@ use core::{mem, ptr};
 use core::ffi::CStr;
 
 use core::ptr::NonNull;
+use no_panic::no_panic;
 
 use wdk_sys::_WORK_QUEUE_TYPE::DelayedWorkQueue;
-use wdk_sys::ntddk::{IoAllocateWorkItem, IoCreateDevice, IoCreateNotificationEvent, IoDeleteDevice, IofCompleteRequest, IoFreeWorkItem, IoGetAttachedDevice, IoQueueWorkItem, MmGetSystemRoutineAddress, PsLookupProcessByProcessId, PsSetCreateProcessNotifyRoutine};
+use wdk_sys::ntddk::{IoAllocateWorkItem, IoCreateDevice, IoDeleteDevice, IofCompleteRequest, IoFreeWorkItem, IoQueueWorkItem, MmGetSystemRoutineAddress, PsLookupProcessByProcessId};
 use crate::utils::{add_notify_callback, KernelEvent, remove_notify_callback, WindowsUnicode};
 
 pub struct StringObject {
@@ -77,12 +78,16 @@ impl Drop for StringObject {
     }
 }
 
-fn find_pid_resolver() -> ProcessNameResolver {
+fn find_pid_resolver() -> Result<ProcessNameResolver, NTSTATUS> {
     let mut resolver_name = "PsGetProcessImageFileName".to_string().to_unicode();
     let resolver = unsafe {
         let address: PVOID = MmGetSystemRoutineAddress(&mut resolver_name);
-        debug_assert!(!address.is_null(), "Failed to find GetProcessImageFileName");
-        mem::transmute::<PVOID, ProcessNameResolver>(address)
+        if address.is_null() {
+            println!("Failed to find GetProcessImageFileName");
+            Err(STATUS_NO_SUCH_MEMBER)
+        } else {
+            Ok(mem::transmute::<PVOID, ProcessNameResolver>(address))
+        }
     };
     resolver
 }
@@ -100,7 +105,7 @@ impl SpyWorker {
     pub fn new(mut spy: NonNull<ProcessSpy>, proc: HANDLE, is_created: BOOLEAN) -> Box<SpyWorker> {
         let device = unsafe { spy.as_mut().device() };
         let handle = unsafe { IoAllocateWorkItem(device) };
-        Box::new(Self { handle, spy, proc, is_created })
+        Box::new(Self { handle, proc, is_created, spy })
     }
     pub const fn handle(&self) -> PIO_WORKITEM {
         self.handle
@@ -125,6 +130,7 @@ pub struct ProcessSpy {
     //events to communicate with user-mode manager that should start/close corresponding process
     create_event: KernelEvent,
     exit_event: KernelEvent,
+    //the function pointer
     pid_resolver: ProcessNameResolver,
 }
 
@@ -138,11 +144,11 @@ type ProcessNameResolver = fn(PEPROCESS) -> PCHAR;
 impl ProcessSpy {
     const TRACKABLE_PROCESS_NAME: &'static CStr = unsafe {
         CStr::from_bytes_with_nul_unchecked(
-            "firefox.exe\0".as_bytes()
+            b"firefox.exe\0"
         )
     };
     pub fn new(driver: &mut DRIVER_OBJECT) -> Result<&'static mut Self, NTSTATUS> {
-        let device: *mut DEVICE_OBJECT = ptr::null_mut();
+        let mut device: *mut DEVICE_OBJECT = ptr::null_mut();
         let nt_status = unsafe {
             IoCreateDevice(
                 driver,
@@ -151,23 +157,26 @@ impl ProcessSpy {
                 FILE_DEVICE_UNKNOWN,
                 0,
                 FALSE as BOOLEAN,
-                &mut (device as *mut DEVICE_OBJECT),
+                &mut device,
             )
         };
         if !nt_success(nt_status) {
             return Err(nt_status);
         }
-        debug_assert_ne!(device, ptr::null_mut(), "Process spy cannot be null after initialization");
-        let create_event_name = concat!("\\BaseNamedObjects\\", "RustProcessSpyCreateEvent")
+        if device.is_null() {
+            println!("Device object still null");
+            return Err(STATUS_UNEXPECTED_IO_ERROR);
+        }
+        let create_event_name = concat!("\\BaseNamedObjects\\", "RustProcessSpyCreate")
             .to_string();
-        let exit_event_name = concat!("\\BaseNamedObjects\\", "RustProcessSpyExitEvent")
+        let exit_event_name = concat!("\\BaseNamedObjects\\", "RustProcessSpyExit")
             .to_string();
-        let create_event = KernelEvent::new(&create_event_name);
-        let exit_event = KernelEvent::new(&exit_event_name);
-        let pid_resolver = find_pid_resolver();
+        let create_event = KernelEvent::new(&create_event_name)?;
+        let exit_event = KernelEvent::new(&exit_event_name)?;
+        let pid_resolver = find_pid_resolver()?;
         let spy = unsafe {
             let spy_layout = (*device).DeviceExtension.cast::<Self>();
-            spy_layout.write(ProcessSpy {
+            spy_layout.write(Self {
                 device: NonNull::new_unchecked(device),
                 create_event,
                 exit_event,
@@ -175,6 +184,7 @@ impl ProcessSpy {
             });
             &mut *spy_layout
         };
+        println!("New spy is created");
         Ok(spy)
     }
 
@@ -237,13 +247,14 @@ fn replace_current_spy(spy: &'static mut ProcessSpy) -> Option<&'static mut Proc
 
 ///the process callback that will be invoked each time when new process is created
 pub unsafe extern "C" fn notify_callback(_parent: HANDLE, child: HANDLE, is_created: BOOLEAN) {
+    println!("Notify callback is started");
     let spy = current_spy();
     let worker = SpyWorker::new(spy, child, is_created);
     IoQueueWorkItem(
         worker.handle(),
         Some(SpyWorker::dispatch_wrapper),
         DelayedWorkQueue,
-        Box::leak(worker) as *mut SpyWorker as _,
+        (Box::leak(worker) as *mut SpyWorker).cast(),
     );
 }
 
@@ -268,6 +279,7 @@ pub unsafe extern "C" fn notify_callback(_parent: HANDLE, child: HANDLE, is_crea
 /// * `STATUS_UNSUCCESSFUL` - otherwise.
 #[link_section = "INIT"]
 #[export_name = "DriverEntry"] // WDF expects a symbol with the name DriverEntry
+#[no_panic]
 extern "system" fn driver_entry(
     driver: &mut DRIVER_OBJECT,
     registry_path: PCUNICODE_STRING,
@@ -292,7 +304,6 @@ extern "system" fn driver_entry(
         println!("Error: WdfDriverCreate failed {nt_status:#010X}");
         return nt_status;
     }
-    echo_print_driver_version();
     init_driver_functions(driver);
     let spy_result = ProcessSpy::new(driver);
     match spy_result {
@@ -304,10 +315,12 @@ extern "system" fn driver_entry(
             return code;
         }
     }
+    echo_print_driver_version();
     add_notify_callback(Some(notify_callback));
     nt_status
 }
 
+#[link_section = "INIT"]
 fn init_driver_functions(driver: &mut DRIVER_OBJECT) {
     for (index, function) in driver.MajorFunction.iter_mut().enumerate() {
         let proc_index = index as u32;
@@ -318,6 +331,7 @@ fn init_driver_functions(driver: &mut DRIVER_OBJECT) {
         }
     }
     driver.DriverUnload = Some(unload_driver);
+    println!("Driver functions are initialized");
 }
 
 extern "C" fn unsupported_function(_device: *mut DEVICE_OBJECT, irp: *mut IRP) -> NTSTATUS {
@@ -340,7 +354,9 @@ extern "C" fn create_close_function(_device: *mut DEVICE_OBJECT, irp: *mut IRP) 
     STATUS_SUCCESS
 }
 
+#[link_section = "PAGE"]
 extern "C" fn unload_driver(_driver: *mut DRIVER_OBJECT) {
+    println!("Driver unloading is started");
     unsafe {
         let spy = current_spy().as_mut();
         spy.free();
@@ -432,7 +448,7 @@ fn echo_print_driver_version() -> NTSTATUS {
     // 2) Find out to which version of framework this driver is bound to.
     //
     let mut ver = WDF_DRIVER_VERSION_AVAILABLE_PARAMS {
-        Size: core::mem::size_of::<WDF_DRIVER_VERSION_AVAILABLE_PARAMS>() as ULONG,
+        Size: mem::size_of::<WDF_DRIVER_VERSION_AVAILABLE_PARAMS>() as ULONG,
         MajorVersion: 1,
         MinorVersion: 0,
     };
