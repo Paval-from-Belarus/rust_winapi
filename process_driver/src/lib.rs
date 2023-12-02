@@ -39,7 +39,6 @@
 #![allow(clippy::missing_safety_doc)]
 
 mod driver;
-mod utils;
 
 #[cfg(not(test))]
 #[panic_handler]
@@ -49,6 +48,7 @@ pub fn panic(info: &core::panic::PanicInfo) -> ! {
 }
 
 extern crate alloc;
+extern crate utils;
 
 #[cfg(not(test))]
 use wdk_alloc::WDKAllocator;

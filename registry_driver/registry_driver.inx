@@ -34,7 +34,7 @@ HKR,,Icon,,-5
 %StdMfg%=Standard,NT$ARCH$.10.0...16299
 
 [Standard.NT$ARCH$.10.0...16299]
-%DeviceDesc%=RustRegistryLog, root\RustVirtualDeviceId
+%DeviceDesc%=RustRegistryLogDevice, root\RustVirtualDeviceId
 
 [RustRegistryLogDevice.NT$ARCH$]
 CopyFiles=Drivers_Dir
@@ -44,9 +44,9 @@ registry_driver.sys
 
 ; ================= Service installation =================
 [RustRegistryLogDevice.NT$ARCH$.Services]
-AddService = RustRegistryLog, %SPSVCINST_ASSOCSERVICE%, Rust_Process_Spy_Install
+AddService = RustRegistryLog, %SPSVCINST_ASSOCSERVICE%, Rust_Registry_Log_Install
 
-[Rust_Process_Spy_Install]
+[Rust_Registry_Log_Install]
 DisplayName    = %ServiceDesc%
 ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
 StartType      = 3               ; SERVICE_DEMAND_START

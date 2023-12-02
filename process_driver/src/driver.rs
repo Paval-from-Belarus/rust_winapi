@@ -12,11 +12,10 @@ use core::{mem, ptr};
 use core::ffi::CStr;
 
 use core::ptr::NonNull;
-use no_panic::no_panic;
 
 use wdk_sys::_WORK_QUEUE_TYPE::DelayedWorkQueue;
 use wdk_sys::ntddk::{IoAllocateWorkItem, IoCreateDevice, IoDeleteDevice, IofCompleteRequest, IoFreeWorkItem, IoQueueWorkItem, MmGetSystemRoutineAddress, PsLookupProcessByProcessId};
-use crate::utils::{add_notify_callback, KernelEvent, remove_notify_callback, WindowsUnicode};
+use utils::{WindowsUnicode, add_notify_callback, KernelEvent, remove_notify_callback};
 
 pub struct StringObject {
     handle: WDFSTRING,
@@ -285,7 +284,6 @@ pub unsafe extern "C" fn notify_callback(_parent: HANDLE, child: HANDLE, is_crea
 /// * `STATUS_UNSUCCESSFUL` - otherwise.
 #[link_section = "INIT"]
 #[export_name = "DriverEntry"] // WDF expects a symbol with the name DriverEntry
-#[no_panic]
 extern "system" fn driver_entry(
     driver: &mut DRIVER_OBJECT,
     registry_path: PCUNICODE_STRING,
