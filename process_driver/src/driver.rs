@@ -162,9 +162,9 @@ impl ProcessSpy {
             println!("Device object still null");
             return Err(STATUS_UNEXPECTED_IO_ERROR);
         }
-        let create_event_name = concat!("\\BaseNamedObjects\\", "RustProcessSpyCreate")
+        let create_event_name = concat!("\\BaseNamedObjects\\", "RustProcessSpyCreateEvent")
             .to_string();
-        let exit_event_name = concat!("\\BaseNamedObjects\\", "RustProcessSpyExit")
+        let exit_event_name = concat!("\\BaseNamedObjects\\", "RustProcessSpyExitEvent")
             .to_string();
         let create_event = KernelEvent::new(&create_event_name)?;
         let exit_event = KernelEvent::new(&exit_event_name)?;

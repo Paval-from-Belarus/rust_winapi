@@ -18,7 +18,7 @@ impl KernelEvent {
     pub fn new(event_name: &String) -> Result<Self, NTSTATUS> {
         let mut handle: HANDLE = ptr::null_mut();
         let mut unicode_event_name = event_name.to_unicode();
-        // println!("The unicode len={} and buf_len={}", unicode_event_name.Length, unicode_event_name.MaximumLength);
+        println!("The unicode len={} and buf_len={}", unicode_event_name.Length, unicode_event_name.MaximumLength);
         let event = unsafe {
             IoCreateNotificationEvent(&mut unicode_event_name, &mut handle)
         };

@@ -15,8 +15,8 @@ use winapi::um::synchapi::{OpenEventA, WaitForSingleObject};
 use winapi::um::winbase::{CREATE_UNICODE_ENVIRONMENT, WAIT_OBJECT_0};
 use winapi::um::winnt::{HANDLE, SYNCHRONIZE};
 
-const CREATE_EVENT_NAME: &'static [u8] = b"Global\\RustProcessSpyCreate\0";
-const EXIT_EVENT_NAME: &'static [u8] = b"Global\\RustProcessSpyExit\0";
+const CREATE_EVENT_NAME: &'static [u8] = b"Global\\RustProcessSpyCreateEvent\0";
+const EXIT_EVENT_NAME: &'static [u8] = b"Global\\RustProcessSpyExitEvent\0";
 
 static IS_ALIVE: AtomicBool = AtomicBool::new(true);
 
