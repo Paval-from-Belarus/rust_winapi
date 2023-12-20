@@ -12,7 +12,7 @@ use wdk_sys::{DEVICE_OBJECT, DRIVER_OBJECT, IO_NO_INCREMENT, LARGE_INTEGER, macr
 use wdk_sys::ntddk::{KeGetCurrentIrql, CmRegisterCallback, CmUnRegisterCallback, IoCreateFile, IofCompleteRequest, ZwClose, ZwCreateFile, ZwWriteFile, IoCreateDevice, IoDeleteDevice, IoAllocateWorkItem, IoFreeWorkItem, IoQueueWorkItem};
 use wdk_sys::{*};
 use wdk_sys::_CREATE_FILE_TYPE::CreateFileTypeNone;
-use wdk_sys::_REG_NOTIFY_CLASS::RegNtSetValueKey;
+use wdk_sys::_REG_NOTIFY_CLASS::{RegNtSetValueKey, Type};
 use wdk_sys::_WORK_QUEUE_TYPE::DelayedWorkQueue;
 use utils::WindowsUnicode;
 
@@ -71,7 +71,7 @@ pub struct RegisterLogger {
     cookie: LARGE_INTEGER,
     log_file: HANDLE,
     device: NonNull<DEVICE_OBJECT>,
-    dispatched_count: usize,
+    elapsed_time: usize,
 }
 
 unsafe impl Sync for RegisterLogger {}
@@ -146,30 +146,31 @@ impl RegisterLogger {
                 cookie,
                 log_file,
                 device: NonNull::new_unchecked(device),
-                dispatched_count: 0,
+                elapsed_time: 0,
             }))
         }
     }
     fn dispatch(&mut self, notify_class: REG_NOTIFY_CLASS, generic_info: PVOID) -> NTSTATUS {
-        //we dispatches only first 1000 entries
-        //to prevent bugs)
-        if self.dispatched_count >= 1000 {
+        if self.elapsed_time >= 1000 {
             return STATUS_SUCCESS;
         }
-        let message: String;
         println!("We will log!");
-        self.dispatched_count += 1;
-        if notify_class == RegNtSetValueKey {
-            let info = unsafe {
-                &*(generic_info as *const REG_SET_VALUE_KEY_INFORMATION)
-            };
-            let entry_key = unsafe {
-                String::from_unicode(&*info.ValueName)
-            };
-            message = format!("The entry {entry_key} will be changed\n");
-        } else {
-            message = "Let's log unknown info\n".to_string();
-        }
+        self.elapsed_time += 1;
+        const REG_NT_SET_VALUE: Type = 1;
+        const REG_NT_PRE_QUERY_VALUE_KEY: Type = 8;
+        let message = match notify_class {
+            REG_NT_SET_VALUE => {
+                let info = unsafe { &*(generic_info as *const REG_SET_VALUE_KEY_INFORMATION) };
+                let entry_key = unsafe { String::from_unicode(&*info.ValueName) };
+                format!("The entry {entry_key} will be changed\n")
+            }
+            REG_NT_PRE_QUERY_VALUE_KEY => {
+                let info = unsafe { &*(generic_info as *const REG_QUERY_VALUE_KEY_INFORMATION) };
+                let key_value = unsafe { String::from_unicode(&*info.ValueName) };
+                format!("The key value {key_value} will be queried\n")
+            }
+            _ => "Unknown registry info\n".to_string()
+        };
         let worker = IoWorker::new(self, message);
         unsafe {
             IoQueueWorkItem(worker.handle,
